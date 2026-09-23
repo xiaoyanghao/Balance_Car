@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/Cat.png</file>
+        <file>images/Cat.svg</file>
+        <file>images/Dog.png</file>
+        <file>images/Dog.svg</file>
+        <file>images/Down.svg</file>
+        <file>images/JoystickBezelLight.png</file>
+        <file>images/Left.svg</file>
+        <file>images/Right.svg</file>
+        <file>images/Up.svg</file>
+        <file>qml/JoystickThumbPad.qml</file>
+        <file>qml/Output.qml</file>
+        <file>qml/main.qml</file>
+    </qresource>
+</RCC>

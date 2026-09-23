@@ -1,0 +1,1982 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Parm</class>
+ <widget class="QMainWindow" name="Parm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>870</width>
+    <height>766</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
+  </property>
+  <property name="font">
+   <font>
+    <family>楷体</family>
+   </font>
+  </property>
+  <property name="cursor">
+   <cursorShape>ArrowCursor</cursorShape>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::DefaultContextMenu</enum>
+  </property>
+  <property name="windowTitle">
+   <string>控制台</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="res.qrc">
+    <normaloff>:/balance.ico</normaloff>:/balance.ico</iconset>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(226, 255, 255, 250), stop:1 rgba(255, 255, 255, 255));
+alternate-background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(226, 255, 255, 250), stop:1 rgba(255, 255, 255, 255));</string>
+  </property>
+  <property name="animated">
+   <bool>true</bool>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="font">
+    <font>
+     <family>楷体</family>
+    </font>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_7">
+    <item>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QWidget" name="widget_3" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QTabWidget" name="tabWidget_2">
+          <property name="font">
+           <font>
+            <family>楷体</family>
+           </font>
+          </property>
+          <property name="tabPosition">
+           <enum>QTabWidget::North</enum>
+          </property>
+          <property name="tabShape">
+           <enum>QTabWidget::Rounded</enum>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab_5">
+           <attribute name="icon">
+            <iconset>
+             <normaloff>../../ICON/串口配置管理.png</normaloff>../../ICON/串口配置管理.png</iconset>
+           </attribute>
+           <attribute name="title">
+            <string/>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout_24">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_18">
+                <item>
+                 <widget class="QPushButton" name="btn_serial_check">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>串口刷新</string>
+                  </property>
+                  <property name="icon">
+                   <iconset>
+                    <normaloff>../../ICON/刷新.png</normaloff>../../ICON/刷新.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_19">
+                <item>
+                 <widget class="QLabel" name="label_2">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>串口选择：</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="cmb_serial_port"/>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_20">
+                <item>
+                 <widget class="QLabel" name="label_3">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>波特率：</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="cmb_baud_rate">
+                  <property name="editable">
+                   <bool>false</bool>
+                  </property>
+                  <property name="currentText">
+                   <string>115200</string>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>115200</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string comment="1">1200</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2400</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>4800</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>9600</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>19200</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>38400</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>57600</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>230400</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_21">
+                <item>
+                 <widget class="QLabel" name="label_4">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>数据位：</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="cmb_data_bits">
+                  <property name="currentText">
+                   <string>8</string>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>8</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>7</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>6</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>5</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_22">
+                <item>
+                 <widget class="QLabel" name="label_5">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>停止位：</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="cmb_stop_bits">
+                  <item>
+                   <property name="text">
+                    <string>1</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_23">
+                <item>
+                 <widget class="QLabel" name="label_6">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>校验位：</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="cmb_parity_bits">
+                  <item>
+                   <property name="text">
+                    <string>N</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Odd</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Even</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btn_open_serail">
+                <property name="font">
+                 <font>
+                  <family>楷体</family>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>打开串口</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>../../ICON/icons8-connected-26.png</normaloff>../../ICON/icons8-connected-26.png</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btn_close_serial">
+                <property name="font">
+                 <font>
+                  <family>楷体</family>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>关闭串口</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>../../ICON/icons8-disconnected-26.png</normaloff>../../ICON/icons8-disconnected-26.png</iconset>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_6">
+           <attribute name="icon">
+            <iconset>
+             <normaloff>../../ICON/WIFI串口服务器.png</normaloff>../../ICON/WIFI串口服务器.png</iconset>
+           </attribute>
+           <attribute name="title">
+            <string/>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QLabel" name="label_34">
+              <property name="font">
+               <font>
+                <family>楷体</family>
+                <pointsize>9</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;目标地址IP：&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="IPAddress" name="le_taget_ip">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>楷体</family>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_37">
+              <property name="font">
+               <font>
+                <family>楷体</family>
+               </font>
+              </property>
+              <property name="text">
+               <string>目标端口：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="sb_taget_port">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>楷体</family>
+               </font>
+              </property>
+              <property name="maximum">
+               <number>65535</number>
+              </property>
+              <property name="value">
+               <number>9000</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_38">
+              <property name="font">
+               <font>
+                <family>楷体</family>
+               </font>
+              </property>
+              <property name="text">
+               <string>本地端口：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="sb_local_port">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>楷体</family>
+               </font>
+              </property>
+              <property name="maximum">
+               <number>65535</number>
+              </property>
+              <property name="value">
+               <number>6666</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_net_connet">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>楷体</family>
+               </font>
+              </property>
+              <property name="text">
+               <string>网络连接</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../../ICON/icons8-wi-fi-26.png</normaloff>../../ICON/icons8-wi-fi-26.png</iconset>
+              </property>
+              <property name="flat">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_net_disconnet">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="font">
+               <font>
+                <family>楷体</family>
+               </font>
+              </property>
+              <property name="text">
+               <string>网络断开</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../../ICON/无网络.png</normaloff>../../ICON/无网络.png</iconset>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="widget_2" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>3</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QGroupBox" name="gear_groupBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>8</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <family>楷体</family>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="title">
+           <string/>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="GaugeCar" name="gaugeCar"/>
+           </item>
+           <item>
+            <widget class="GaugePlane" name="gaugePlane"/>
+           </item>
+           <item>
+            <widget class="GaugeCompassPan" name="gaugeCompassPan"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="widget" native="true">
+      <layout class="QHBoxLayout" name="horizontalLayout_29">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_28">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_17">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_15">
+             <item>
+              <widget class="QLabel" name="label_frq">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;串口帧频（HZ):&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="textFormat">
+                <enum>Qt::RichText</enum>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_59">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="text">
+                <string>CPU利用率(%)：</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_60">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="text">
+                <string>目标航向角(deg)：</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_50">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="text">
+                <string>数据记录：</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_19">
+             <item>
+              <widget class="QLCDNumber" name="lcd_data_frq">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="lcd_cpu_usage">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="lcd_taget_yaw">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="ImageSwitch" name="sw_data_record">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="buttonStyle">
+                <enum>ImageSwitch::ButtonStyle_1</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_26">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_21">
+             <item>
+              <widget class="QLabel" name="label_40">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>俯仰角（deg）：</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_41">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>俯仰角速率（deg/s）:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_42">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>偏航角（deg）：</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_43">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>偏航角速率（deg/s）:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_22">
+             <item>
+              <widget class="QLCDNumber" name="lcd_pitch">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="lcd_pitch_degs">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="lcd_yaw">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="lcd_yaw_degs">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_27">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_23">
+             <item>
+              <widget class="QLabel" name="label_44">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>目标速度:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_45">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>当前速度:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_46">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>左电机速度：</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_47">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>右电机速度：</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_24">
+             <item>
+              <widget class="QLCDNumber" name="lcd_taget_spd">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="lcd_current_spd">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="lcd_left_spd">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLCDNumber" name="lcd_right_spd">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="mode">
+                <enum>QLCDNumber::Dec</enum>
+               </property>
+               <property name="segmentStyle">
+                <enum>QLCDNumber::Flat</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_25">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_17">
+             <item>
+              <widget class="QLabel" name="label_48">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>左电机方向:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_49">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>右电机方向:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_18">
+             <item>
+              <widget class="NavLabel" name="le_left_motor_dir">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>顺</string>
+               </property>
+               <property name="borderRadius">
+                <number>12</number>
+               </property>
+               <property name="arrowSize">
+                <number>0</number>
+               </property>
+               <property name="triangleLen">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="NavLabel" name="le_right_motor_dir">
+               <property name="font">
+                <font>
+                 <family>楷体</family>
+                </font>
+               </property>
+               <property name="text">
+                <string>顺</string>
+               </property>
+               <property name="borderRadius">
+                <number>12</number>
+               </property>
+               <property name="arrowSize">
+                <number>0</number>
+               </property>
+               <property name="triangleLen">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox_5">
+      <property name="font">
+       <font>
+        <family>楷体</family>
+       </font>
+      </property>
+      <property name="title">
+       <string>指令</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_33">
+       <item>
+        <widget class="QLineEdit" name="le_cmd">
+         <property name="font">
+          <font>
+           <family>楷体</family>
+          </font>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="font">
+       <font>
+        <family>楷体</family>
+       </font>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="elideMode">
+       <enum>Qt::ElideMiddle</enum>
+      </property>
+      <property name="usesScrollButtons">
+       <bool>true</bool>
+      </property>
+      <property name="documentMode">
+       <bool>false</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
+      </property>
+      <property name="movable">
+       <bool>false</bool>
+      </property>
+      <property name="tabBarAutoHide">
+       <bool>false</bool>
+      </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="icon">
+        <iconset>
+         <normaloff>../../ICON/调试模式.png</normaloff>../../ICON/调试模式.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>控制调试</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QSplitter" name="splitter_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string/>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_34">
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_3">
+                  <item>
+                   <widget class="QLabel" name="label_10">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>直立Kp      ：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_20">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>速度Kp      ：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_15">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>航向Kp      ：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_57">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>目标速度    ：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_5">
+                  <item>
+                   <widget class="QDoubleSpinBox" name="sb_balance_kp">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>0.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>300.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>5.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>120.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="sb_spd_kp">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>0.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>250.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>2.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>120.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="sb_turn_kp">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>0.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>0.010000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.001000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="sb_taget_spd">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>-100.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>100.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>1.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_35">
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_8">
+                  <item>
+                   <widget class="QLabel" name="label_18">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>直立Kd     ：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_22">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>速度Ki     ：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_19">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>航向Kd     ：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_58">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>目标航向   ：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_16">
+                  <item>
+                   <widget class="QDoubleSpinBox" name="sb_balance_kd">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>0.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>15.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.100000000000000</double>
+                    </property>
+                    <property name="stepType">
+                     <enum>QAbstractSpinBox::DefaultStepType</enum>
+                    </property>
+                    <property name="value">
+                     <double>6.480000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="sb_spd_ki">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>0.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>10.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.100000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.600000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="sb_turn_kd">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>0.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>0.010000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>0.001000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="sb_taget_yaw">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="decimals">
+                     <number>3</number>
+                    </property>
+                    <property name="minimum">
+                     <double>0.000000000000000</double>
+                    </property>
+                    <property name="maximum">
+                     <double>360.000000000000000</double>
+                    </property>
+                    <property name="singleStep">
+                     <double>1.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_36">
+              <item>
+               <widget class="QPushButton" name="btn_control_dug_set">
+                <property name="font">
+                 <font>
+                  <family>楷体</family>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>设置</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>../../ICON/设置参数.png</normaloff>../../ICON/设置参数.png</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btn_control_dug_req">
+                <property name="font">
+                 <font>
+                  <family>楷体</family>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>查询</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>../../ICON/参数查询.png</normaloff>../../ICON/参数查询.png</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btn_control_dug_apply">
+                <property name="font">
+                 <font>
+                  <family>楷体</family>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>应用</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>../../ICON/参数保存.png</normaloff>../../ICON/参数保存.png</iconset>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="font">
+            <font>
+             <family>楷体</family>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="title">
+            <string/>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_4">
+                <item>
+                 <layout class="QVBoxLayout" name="verticalLayout_20">
+                  <item>
+                   <widget class="QLabel" name="label_11">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>参数类型</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_39">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>直立环输出：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_51">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>速度环输出：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_52">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>航向环输出：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_53">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>电机输出：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_56">
+                    <property name="font">
+                     <font>
+                      <family>楷体</family>
+                     </font>
+                    </property>
+                    <property name="text">
+                     <string>命令方向：</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_25">
+                <item>
+                 <widget class="QLabel" name="label_54">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>左电机</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLCDNumber" name="lcd_lbalance_pwm">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="segmentStyle">
+                   <enum>QLCDNumber::Flat</enum>
+                  </property>
+                  <property name="intValue" stdset="0">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLCDNumber" name="lcd_lspd_pwm">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="mode">
+                   <enum>QLCDNumber::Dec</enum>
+                  </property>
+                  <property name="segmentStyle">
+                   <enum>QLCDNumber::Flat</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLCDNumber" name="lcd_lturn_pwm">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="segmentStyle">
+                   <enum>QLCDNumber::Flat</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLCDNumber" name="lcd_lfinal_pwm">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="segmentStyle">
+                   <enum>QLCDNumber::Flat</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="NavLabel" name="le_lcmd_dir">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="frameShape">
+                   <enum>QFrame::NoFrame</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Plain</enum>
+                  </property>
+                  <property name="text">
+                   <string>顺</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="borderRadius">
+                   <number>12</number>
+                  </property>
+                  <property name="arrowSize">
+                   <number>0</number>
+                  </property>
+                  <property name="triangleLen">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_26">
+                <item>
+                 <widget class="QLabel" name="label_55">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>右电机</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLCDNumber" name="lcd_rbalance_pwm">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="segmentStyle">
+                   <enum>QLCDNumber::Flat</enum>
+                  </property>
+                  <property name="intValue" stdset="0">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLCDNumber" name="lcd_rspd_pwm">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="mode">
+                   <enum>QLCDNumber::Dec</enum>
+                  </property>
+                  <property name="segmentStyle">
+                   <enum>QLCDNumber::Flat</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLCDNumber" name="lcd_rturn_pwm">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="segmentStyle">
+                   <enum>QLCDNumber::Flat</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLCDNumber" name="lcd_rfinal_pwm">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="segmentStyle">
+                   <enum>QLCDNumber::Flat</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="NavLabel" name="le_rcmd_dir">
+                  <property name="font">
+                   <font>
+                    <family>楷体</family>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>顺</string>
+                  </property>
+                  <property name="borderRadius">
+                   <number>12</number>
+                  </property>
+                  <property name="arrowSize">
+                   <number>0</number>
+                  </property>
+                  <property name="triangleLen">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="icon">
+        <iconset>
+         <normaloff>../../ICON/游戏手柄.png</normaloff>../../ICON/游戏手柄.png</iconset>
+       </attribute>
+       <attribute name="title">
+        <string>虚拟遥杆</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <item>
+         <widget class="QCheckBox" name="cb_stick_enable">
+          <property name="font">
+           <font>
+            <family>楷体</family>
+            <pointsize>9</pointsize>
+           </font>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>虚拟摇杆使能</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QQuickWidget" name="stick_quickWidget">
+          <property name="resizeMode">
+           <enum>QQuickWidget::SizeRootObjectToView</enum>
+          </property>
+          <property name="source">
+           <url>
+            <string>qrc:/qml/main.qml</string>
+           </url>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="sizeGripEnabled">
+    <bool>true</bool>
+   </property>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QQuickWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QtQuickWidgets/QQuickWidget</header>
+  </customwidget>
+  <customwidget>
+   <class>GaugeCar</class>
+   <extends>QWidget</extends>
+   <header>gaugecar.h</header>
+  </customwidget>
+  <customwidget>
+   <class>GaugeCompassPan</class>
+   <extends>QWidget</extends>
+   <header>gaugecompasspan.h</header>
+  </customwidget>
+  <customwidget>
+   <class>GaugePlane</class>
+   <extends>QWidget</extends>
+   <header>gaugeplane.h</header>
+  </customwidget>
+  <customwidget>
+   <class>NavLabel</class>
+   <extends>QLabel</extends>
+   <header>navlabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ImageSwitch</class>
+   <extends>QWidget</extends>
+   <header>imageswitch.h</header>
+  </customwidget>
+  <customwidget>
+   <class>IPAddress</class>
+   <extends>QWidget</extends>
+   <header>ipaddress.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="qml.qrc"/>
+  <include location="res.qrc"/>
+ </resources>
+ <connections/>
+</ui>

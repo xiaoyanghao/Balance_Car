@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STM32 平衡小车控制优化分析报告</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --orange: #e88d3f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+    line-height: 1.7;
+    padding: 0;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 {
+    font-size: 2.2em; font-weight: 700; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .subtitle { color: var(--text-dim); font-size: 1.05em; margin-bottom: 32px; }
+  h2 {
+    font-size: 1.5em; color: var(--accent); margin-top: 48px; margin-bottom: 16px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2 .icon { font-size: 0.85em; }
+  h3 { font-size: 1.2em; color: var(--text); margin-top: 28px; margin-bottom: 12px; }
+  h4 { font-size: 1.05em; color: var(--purple); margin-top: 20px; margin-bottom: 8px; }
+  p { margin-bottom: 12px; color: var(--text); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 20px 24px; margin-bottom: 16px;
+  }
+  .card-title { font-weight: 600; font-size: 1.05em; margin-bottom: 10px; }
+  .severity {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 0.8em; font-weight: 600; margin-right: 8px;
+  }
+  .sev-high { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+  .sev-mid { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+  .sev-low { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+  .sev-info { background: rgba(88,166,255,0.15); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }
+  pre {
+    background: #0d1117; border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px 18px; margin: 12px 0; overflow-x: auto;
+    font-size: 0.85em; line-height: 1.5;
+  }
+  code { font-family: 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace; }
+  pre code { color: #e6edf3; }
+  .code-comment { color: #6a9955; }
+  .code-keyword { color: #c69026; }
+  .code-func { color: #d2a8ff; }
+  .code-string { color: #a5d6ff; }
+  .code-num { color: #79c0ff; }
+  ul, ol { margin-left: 24px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  .badge {
+    display: inline-block; padding: 1px 8px; border-radius: 4px;
+    font-size: 0.8em; font-weight: 500; margin-left: 6px;
+  }
+  .badge-file { background: rgba(188,140,255,0.15); color: var(--purple); }
+  .badge-line { background: rgba(232,141,63,0.15); color: var(--orange); }
+  table {
+    width: 100%; border-collapse: collapse; margin: 12px 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+  }
+  th { background: var(--surface2); color: var(--accent); font-weight: 600; }
+  td { color: var(--text); }
+  tr:nth-child(even) { background: rgba(22,27,34,0.5); }
+  .summary-box {
+    background: linear-gradient(135deg, rgba(88,166,255,0.08), rgba(188,140,255,0.08));
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 24px 28px; margin-bottom: 32px;
+  }
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; margin-top: 16px;
+  }
+  .stat-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px; text-align: center;
+  }
+  .stat-num { font-size: 2em; font-weight: 700; }
+  .stat-label { color: var(--text-dim); font-size: 0.85em; }
+  .toc {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 20px 24px; margin-bottom: 32px;
+  }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc ul { list-style: none; margin-left: 0; }
+  .toc li { margin-bottom: 4px; padding-left: 8px; }
+  .toc .sub { padding-left: 24px; color: var(--text-dim); }
+  .fix-block {
+    background: rgba(63,185,80,0.06); border-left: 3px solid var(--green);
+    padding: 12px 18px; margin: 12px 0; border-radius: 0 6px 6px 0;
+  }
+  .fix-label { color: var(--green); font-weight: 600; font-size: 0.85em; margin-bottom: 6px; }
+  .issue-block {
+    background: rgba(248,81,73,0.06); border-left: 3px solid var(--red);
+    padding: 12px 18px; margin: 12px 0; border-radius: 0 6px 6px 0;
+  }
+  .issue-label { color: var(--red); font-weight: 600; font-size: 0.85em; margin-bottom: 6px; }
+  .arch-diagram {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 20px; margin: 16px 0; text-align: center;
+  }
+  .arch-flow {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+    align-items: center; padding: 10px 0;
+  }
+  .arch-node {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 16px; font-size: 0.85em; min-width: 100px; text-align: center;
+  }
+  .arch-node.active { border-color: var(--green); color: var(--green); }
+  .arch-node.dead { border-color: var(--red); color: var(--red); text-decoration: line-through; opacity: 0.6; }
+  .arch-node.warn { border-color: var(--yellow); color: var(--yellow); }
+  .arch-arrow { color: var(--text-dim); font-size: 1.2em; }
+  .footer {
+    margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 0.85em; text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>STM32 平衡小车控制优化分析报告</h1>
+<p class="subtitle">项目路径: C:\E\33-Balance\STM32F1xx\onboard &nbsp;|&nbsp; MCU: STM32F105 &nbsp;|&nbsp; IMU: MPU6050 (DMP) &nbsp;|&nbsp; 电机驱动: TB6612</p>
+
+<div class="summary-box">
+  <h3 style="margin-top:0; color:var(--accent);">总体评估</h3>
+  <p>本项目是一套基于 STM32F105 + MPU6050 + TB6612 的两轮自平衡小车控制系统。代码结构分为驱动层(BSP)、外设层(Periph)、传感器层(Sensor)、控制层(Control)和接口层(Interface)。整体架构合理，具备安全保护机制(IMU超时、倾倒保护、数值校验)。</p>
+  <p>但经过逐层代码审查，发现 <strong>12 个可优化点</strong>，涉及传感器数据链路冗余、控制算法精度、任务调度效率、电机死区补偿等多个方面。以下按严重程度分级列出。</p>
+  <div class="stat-grid">
+    <div class="stat-item"><div class="stat-num" style="color:var(--red);">4</div><div class="stat-label">高优先级</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:var(--yellow);">5</div><div class="stat-label">中优先级</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:var(--green);">3</div><div class="stat-label">低优先级</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:var(--accent);">12</div><div class="stat-label">总优化项</div></div>
+  </div>
+</div>
+
+<div class="toc">
+  <h3 style="margin-top:0;">目录</h3>
+  <ul>
+    <li><a href="#arch">一、系统架构与数据流分析</a></li>
+    <li><a href="#layer1">二、底层驱动层 (BSP / Periph)</a></li>
+    <li><a href="#layer2">三、传感器层 (IMU / AHRS)</a></li>
+    <li><a href="#layer3">四、控制算法层 (PID)</a></li>
+    <li><a href="#layer4">五、任务调度层</a></li>
+    <li><a href="#layer5">六、通信层</a></li>
+    <li><a href="#summary">七、优化优先级总结</a></li>
+  </ul>
+</div>
+
+<!-- ===================== Architecture ===================== -->
+<h2 id="arch"><span class="icon">1</span> 系统架构与数据流分析</h2>
+
+<div class="card">
+  <p>当前实际数据流如下所示（<span style="color:var(--red);">红色删除线</span>表示被注释/未使用的代码路径，<span style="color:var(--yellow);">黄色</span>表示有隐患的路径，<span style="color:var(--green);">绿色</span>表示正常工作路径）:</p>
+
+  <div class="arch-diagram">
+    <div class="arch-flow">
+      <div class="arch-node active">MPU6050<br><small>I2C (软件模拟)</small></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-node active">eMPL DMP<br><small>100Hz FIFO</small></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-node active">mpu_dmp_get_data<br><small>5ms轮询(200Hz)</small></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-node active">四元数→欧拉角<br><small>get_dmp_ahrs()</small></div>
+    </div>
+    <div class="arch-flow">
+      <span class="arch-arrow">↓</span>
+    </div>
+    <div class="arch-flow">
+      <div class="arch-node warn">Control_Updte<br><small>PID计算 5ms</small></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-node warn">control_apply_motor<br><small>死区补偿</small></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-node active">TB6612<br><small>PWM + GPIO</small></div>
+      <span class="arch-arrow">←</span>
+      <div class="arch-node active">TIM3/TIM5<br><small>编码器</small></div>
+    </div>
+    <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:12px;">
+      <p style="font-size:0.85em; color:var(--text-dim); margin-bottom:8px;">被旁路/未使用的代码路径:</p>
+      <div class="arch-flow">
+        <div class="arch-node dead">imu_samples_pull (TIM2 ISR)</div>
+        <div class="arch-node dead">imu_major_samples_pull / imu_update</div>
+        <div class="arch-node dead">imu_calib_acc / imu_calib_gyro</div>
+        <div class="arch-node dead">2nd/4th阶 Butterworth LPF</div>
+        <div class="arch-node dead">ahrs_update_fusion (DCM)</div>
+        <div class="arch-node dead">drift_correction / acc_noise_check</div>
+      </div>
+    </div>
+  </div>
+
+  <p><strong>核心发现:</strong> 项目中存在大量从飞控系统移植过来的传感器处理和 AHRS 融合代码（imu.c、txg_ahrs_fusion.c），但实际运行时这些路径全部被旁路，系统直接使用 MPU6050 DMP 输出的四元数和陀螺仪数据。这导致：</p>
+  <ul>
+    <li>约 1500 行代码处于死代码状态，增加维护负担</li>
+    <li>软件 I2C + DMP FIFO 轮询的通信方式效率较低</li>
+    <li>DMP 输出的陀螺仪数据未经额外滤波，直接进入 PID 控制</li>
+  </ul>
+</div>
+
+<!-- ===================== Layer 1: BSP/Periph ===================== -->
+<h2 id="layer1"><span class="icon">2</span> 底层驱动层 (BSP / Periph)</h2>
+
+<!-- Issue 1 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-high">高</span>
+    编码器输入捕获滤波器为零 (ICFilter=0)
+    <span class="badge badge-file">bsp_timer_drv.c</span>
+    <span class="badge badge-line">L277,281</span>
+  </div>
+  <p><strong>问题描述:</strong> TIM3/TIM5 编码器模式中，输入捕获滤波器设置为 0，对编码器信号不做任何硬件滤波。在电机高速运转时，编码器信号容易受到电机 PWM 干扰产生毛刺，导致计数值跳动。</p>
+
+  <pre><code><span class="code-comment">// bsp_timer_drv.c L277,281 — 当前设置</span>
+sConfig.IC1Filter = 0;
+sConfig.IC2Filter = 0;
+
+<span class="code-comment">// 编码器线: 374 脉冲/圈(正交×4 = 1496计数/圈)</span>
+<span class="code-comment">// 350RPM → 5.83 rev/s → ~8734 counts/s</span>
+<span class="code-comment">// 5ms 采样 → ~44 counts/次, 噪声毛刺会显著影响速度测量</span></code></pre>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p>将输入捕获滤波器设为 4~8（在 72MHz 时钟下约 0.7~1.4μs 的滤波窗口），可有效抑制电机 PWM 开关噪声引起的编码器毛刺：</p>
+    <pre><code><span class="code-comment">// 推荐修改</span>
+sConfig.IC1Filter = <span class="code-num">6</span>;  <span class="code-comment">// 约 1μs 滤波窗口</span>
+sConfig.IC2Filter = <span class="code-num">6</span>;</code></pre>
+  </div>
+</div>
+
+<!-- Issue 2 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-high">高</span>
+    软件 I2C 通信效率低，DMP 轮询存在 50% 空转
+    <span class="badge badge-file">periph_mpu60x0.c / bsp_i2c_drv.c</span>
+    <span class="badge badge-line">L285-293 / main.c L58</span>
+  </div>
+  <p><strong>问题描述:</strong> MPU6050 使用软件模拟 I2C（GPIO 位操作），每次读写都是阻塞式的。DMP 采样率设为 100Hz（mpu_dmp_init 中 mpu_set_sample_rate(100) 和 dmp_set_fifo_rate(100)），但主循环以 200Hz（5ms）轮询 mpu_dmp_get_data()。由于 DMP FIFO 每 10ms 才更新一次数据，50% 的 dmp_read_fifo 调用会因 FIFO 无新数据而提前返回，但这些调用仍会执行完整的 I2C 读写时序，浪费 CPU 时间。</p>
+
+  <pre><code><span class="code-comment">// main.c L58 — DMP 轮询任务 5ms 一次</span>
+{0, 5, 0, mpu_dmp_get_data},
+
+<span class="code-comment">// txg_ahrs_fusion.c L2074 — DMP 采样率 100Hz = 10ms</span>
+res = mpu_set_sample_rate(100);
+res = dmp_set_fifo_rate(100);
+
+<span class="code-comment">// txg_ahrs_fusion.c L2118 — 若 FIFO 无数据则直接返回</span>
+<span class="code-keyword">if</span>(dmp_read_fifo(gyro, accel, quat, &sensor_timestamp, &sensors, &more))
+    <span class="code-keyword">return</span>;</code></pre>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议 (二选一)</div>
+    <p><strong>方案A:</strong> 将 DMP 轮询周期从 5ms 改为 10ms，与 DMP 100Hz 输出率对齐，消除空转：</p>
+    <pre><code><span class="code-comment">// main.c — 将 5 改为 10</span>
+{0, 10, 0, mpu_dmp_get_data},</code></pre>
+    <p><strong>方案B:</strong> 使用 MPU6050 的 DATA 中断引脚触发读取，避免轮询浪费。MPU6050 已配置了中断（periph_mpu60x0.c L144: reg 55 = 0x10, reg 56 = 0x01），但未连接到 MCU 的外部中断引脚。若硬件上中断引脚已连接，可配置 EXTI 触发读取。</p>
+    <p><strong>方案C (最优):</strong> 改用硬件 I2C + DMA 读取 MPU6050 寄存器，将读取时间从数毫秒降至数十微秒。</p>
+  </div>
+</div>
+
+<!-- Issue 3 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-mid">中</span>
+    电机死区补偿存在零点穿越跳变
+    <span class="badge badge-file">control.c</span>
+    <span class="badge badge-line">L128</span>
+  </div>
+  <p><strong>问题描述:</strong> control_apply_motor() 中，死区补偿值 (180) 是在电机已转动后直接叠加到 PWM 幅值上。当 PWM 从 0 跨越到非零时，输出会从 0 突跳到 180，造成电机扭矩突变，产生可闻的"咔哒"声和速度抖动。</p>
+
+  <pre><code><span class="code-comment">// control.c L128 — 死区补偿直接叠加</span>
+magnitude += (float)dead_zone;
+magnitude = clamp_float(magnitude, 0.0f, (float)BSP_TIM1_PWM_PERIOD);</code></pre>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p>使用平滑过渡的死区补偿：当 PWM 幅值在死区附近时线性插值，避免突跳：</p>
+    <pre><code><span class="code-comment">// 改进方案: 分段平滑死区补偿</span>
+<span class="code-keyword">static</span> <span class="code-func">float</span> apply_dead_zone_compensation(<span class="code-func">float</span> mag, <span class="code-func">uint16_t</span> dead_zone)
+{
+    <span class="code-keyword">const</span> <span class="code-func">float</span> transition_width = (<span class="code-func">float</span>)dead_zone * 2.0f;
+    <span class="code-keyword">if</span> (mag <= 0.0f) <span class="code-keyword">return</span> 0.0f;
+    <span class="code-keyword">if</span> (mag < transition_width) {
+        <span class="code-comment">// 在 0~transition_width 范围内从 0 线性过渡到 dead_zone</span>
+        <span class="code-keyword">return</span> mag * (dead_zone / transition_width);
+    }
+    <span class="code-keyword">return</span> mag + dead_zone;
+}</code></pre>
+  </div>
+</div>
+
+<!-- ===================== Layer 2: Sensor ===================== -->
+<h2 id="layer2"><span class="icon">3</span> 传感器层 (IMU / AHRS)</h2>
+
+<!-- Issue 4 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-high">高</span>
+    DMP 陀螺仪数据未滤波直接用于 PID 微分项
+    <span class="badge badge-file">control.c</span>
+    <span class="badge badge-line">L205</span>
+  </div>
+  <p><strong>问题描述:</strong> 控制器的平衡 PD 环使用了 pitch_gyro 作为微分项。该值来自 DMP FIFO 的原始陀螺仪数据（已转换为 deg/s），但 MPU6050 的内部 LPF 寄存器 (reg 26) 设为 0x00，即 256Hz 带宽——这意味着几乎没有低通滤波。原始陀螺仪数据中的高频噪声会被 BALANCE_KD=7.53 放大，导致 PWM 输出抖动。</p>
+
+  <pre><code><span class="code-comment">// periph_mpu60x0.c L141 — MPU 内部 LPF 设为 0 (256Hz带宽)</span>
+mpu60x0ReliablySetReg(26, 0x00);
+
+<span class="code-comment">// control.c L205 — 直接使用 DMP 原始陀螺仪</span>
+_control.pitch_gyro = (<span class="code-func">float</span>)imu_get_gyro(IMU_INSTANCE_MPU, 1);
+
+<span class="code-comment">// control.c L75 — 微分项乘以 Kd=7.53</span>
+<span class="code-keyword">return</span> _control.balance_kp * (pitch - BALANCE_ANGLE)
+     + _control.balance_kd * pitch_rate;</code></pre>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p><strong>方案1 (最简单):</strong> 将 MPU6050 内部 LPF 寄存器设为 3 或 4（对应 42Hz 或 20Hz 带宽），在硬件层面滤除高频噪声：</p>
+    <pre><code><span class="code-comment">// 在 mpu_dmp_init 中追加配置</span>
+mpu60x0ReliablySetReg(26, 0x03);  <span class="code-comment">// 42Hz LPF</span></code></pre>
+    <p><strong>方案2 (更灵活):</strong> 在控制层对 pitch_gyro 加一阶或二阶低通滤波器，可调截止频率。项目已有现成的 Butterworth 滤波器实现:</p>
+    <pre><code><span class="code-comment">// 在 control.c 中添加</span>
+<span class="code-keyword">static struct</span> SecondOrderLowPass_t _gyro_lpf;
+<span class="code-keyword">static bool</span> _gyro_lpf_inited = <span class="code-keyword">false</span>;
+
+<span class="code-keyword">static float</span> filter_pitch_gyro(<span class="code-func">float</span> raw)
+{
+    <span class="code-keyword">if</span> (!_gyro_lpf_inited) {
+        init_second_order_low_pass(&_gyro_lpf, 40.0, 200, 0.707, raw);
+        _gyro_lpf_inited = <span class="code-keyword">true</span>;
+    }
+    <span class="code-keyword">return</span> (<span class="code-func">float</span>)update_second_order_low_pass(&_gyro_lpf, (<span class="code-func">double</span>)raw);
+}</code></pre>
+  </div>
+</div>
+
+<!-- Issue 5 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-mid">中</span>
+    大量传感器处理代码为死代码，IMU 模块初始化空转
+    <span class="badge badge-file">imu.c</span>
+    <span class="badge badge-line">L71-90</span>
+  </div>
+  <p><strong>问题描述:</strong> imu.c 中的 imu_init() 函数几乎全部被注释，只调用 mpu60x0_init() 而 mpu60x0_init() 又未启用传感器（config 被注释，返回 0）。实际传感器初始化完全依赖 eMPL 库的 mpu_dmp_init()。imu_get_gyro/acc 等函数全部绕过本地滤波管线，直接调用 get_dmp_gyro/accel。imu.c 中约 400 行代码（校准、滤波、坐标旋转）处于未使用状态。</p>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p>有两种策略，取决于项目目标:</p>
+    <ul>
+      <li><strong>策略A (推荐 — 精简):</strong> 删除或归档 imu.c 中未使用的代码路径，只保留 DMP 接口封装。减少编译体积和维护成本。</li>
+      <li><strong>策略B (增强):</strong> 恢复 imu.c 中的本地校准和滤波管线，绕过 DMP 直接读取原始寄存器数据，应用自定义校准和 Butterworth 滤波。这可以提升传感器数据质量，但需要较多开发工作。</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Issue 6 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-mid">中</span>
+    DCM AHRS 融合算法被完全旁路
+    <span class="badge badge-file">txg_ahrs_fusion.c</span>
+    <span class="badge badge-line">L156, L1782-1798</span>
+  </div>
+  <p><strong>问题描述:</strong> txg_ahrs_fusion.c 实现了一套完整的 ArduPilot 风格 DCM 姿态估计算法（约 1900 行），包括陀螺仪积分、加速度计漂移校正、偏航修正等。但 ahrs_update_fusion() 在 main.c 中被注释掉，get_roll_deg/get_pitch_deg/get_yaw_deg 直接返回 DMP 计算的欧拉角。</p>
+
+  <pre><code><span class="code-comment">// main.c L59 — AHRS 融合被注释</span>
+<span class="code-comment">// {0, 5, 0, ahrs_update_fusion},</span>
+
+<span class="code-comment">// txg_ahrs_fusion.c L1784 — 直接返回 DMP 数据</span>
+<span class="code-func">double</span> get_roll_deg(<span class="code-keyword">void</span>) {
+    <span class="code-keyword">return</span> get_dmp_ahrs(1);  <span class="code-comment">// 直接用 DMP 四元数</span>
+}</code></pre>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p>当前 DMP 的姿态估计对于平衡小车已经够用。但 DMP 的偏航角（yaw）存在长时间漂移问题。如果需要精确偏航控制，建议:</p>
+    <ul>
+      <li>保留 DMP 用于 pitch/roll 估计（DMP 的 6 轴 quaternion 在 pitch/roll 上精度良好）</li>
+      <li>对 yaw 通道增加简单的互补滤波器融合陀螺仪积分和 DMP yaw 输出，纠正漂移</li>
+      <li>或恢复 DCM 算法，但需要清理大量 GPS/RTK 相关的死代码（约 600 行被注释的代码块）</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== Layer 3: Control ===================== -->
+<h2 id="layer3"><span class="icon">4</span> 控制算法层 (PID)</h2>
+
+<!-- Issue 7 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-high">高</span>
+    速度积分项缺少 dt 时间因子，抗干扰能力弱
+    <span class="badge badge-file">control.c</span>
+    <span class="badge badge-line">L88</span>
+  </div>
+  <p><strong>问题描述:</strong> 速度环的积分累加 _speed_integral += speed_error 没有乘以时间增量 dt。当前隐式假设控制周期固定为 5ms（200Hz），但实际由于协作式调度器，如果高优先级任务（如 I2C 通信）阻塞，控制周期会波动。缺少 dt 会导致积分速率不稳定，且在周期变化时积分增益等效变化。</p>
+
+  <pre><code><span class="code-comment">// control.c L88 — 当前: 无 dt</span>
+_speed_integral += speed_error;  <span class="code-comment">// 隐式假设 5ms 周期</span>
+
+<span class="code-comment">// 对比: BALANCE_KP 的注释表明使用了 Z-N 法</span>
+<span class="code-comment">// BALANCE_KP = 120 * 0.6 = 72 (Ziegler-Nichols PD)</span>
+<span class="code-comment">// VEL_KI = 140/200 = 0.7, 此处 200 即为假设的采样率</span></code></pre>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p>引入实际 dt（通过 HAL_GetTick 计算），使积分项与时间相关而非与调用次数相关:</p>
+    <pre><code><span class="code-comment">// 在 Control_Updte 开头计算 dt</span>
+<span class="code-keyword">static</span> uint32_t last_tick = 0;
+<span class="code-func">float</span> dt = (<span class="code-func">float</span>)(HAL_GetTick() - last_tick) * 0.001f;
+last_tick = HAL_GetTick();
+<span class="code-keyword">if</span> (dt <= 0.0f || dt > 0.05f) dt = 0.005f;  <span class="code-comment">// 合理范围保护</span>
+
+<span class="code-comment">// 积分累加改为</span>
+_speed_integral += speed_error * dt;
+
+<span class="code-comment">// 同时调整 VEL_KI 定义, 从 140/200 改为以秒为单位</span>
+<span class="code-comment">// 原 VEL_KI=0.7 对应 5ms 周期, 等效 KI_sec = 0.7 / 0.005 = 140</span>
+<span class="code-comment">#define VEL_KI  140.0f  // 单位: 1/s</span></code></pre>
+  </div>
+</div>
+
+<!-- Issue 8 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-mid">中</span>
+    转向环 turn_kd 参数已接收但未使用
+    <span class="badge badge-file">control.c</span>
+    <span class="badge badge-line">L97-101, L162</span>
+  </div>
+  <p><strong>问题描述:</strong> 控制器结构体定义了 turn_kd 参数，网络接口 Control_Set_PramA() 也接收该参数，但 control_turn() 函数只用 P 控制，turn_kd 始终为 0 且未参与计算。纯 P 控制的转向环在目标偏航速率突变时容易产生超调。</p>
+
+  <pre><code><span class="code-comment">// control.c L97 — 转向环只有 P</span>
+<span class="code-keyword">static float</span> control_turn(<span class="code-func">float</span> target_yaw_rate)
+{
+    <span class="code-func">float</span> yaw_rate_error = _control.yaw_gyro - target_yaw_rate;
+    <span class="code-keyword">return</span> _control.turn_kp * yaw_rate_error;  <span class="code-comment">// 无 D 项</span>
+}
+
+<span class="code-comment">// control.c L162 — turn_kd 初始化为 0</span>
+_control.turn_kd = 0.0f;</code></pre>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p>加入转向微分项，阻尼偏航速率振荡:</p>
+    <pre><code><span class="code-comment">// 增加转向速率的微分</span>
+<span class="code-keyword">static float</span> prev_yaw_rate_error = 0.0f;
+
+<span class="code-keyword">static float</span> control_turn(<span class="code-func">float</span> target_yaw_rate)
+{
+    <span class="code-func">float</span> yaw_rate_error = _control.yaw_gyro - target_yaw_rate;
+    <span class="code-func">float</span> derivative = (yaw_rate_error - prev_yaw_rate_error) / 0.005f;
+    prev_yaw_rate_error = yaw_rate_error;
+    <span class="code-keyword">return</span> _control.turn_kp * yaw_rate_error
+         + _control.turn_kd * derivative;
+}</code></pre>
+  </div>
+</div>
+
+<!-- Issue 9 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-mid">中</span>
+    速度滤波器使用简单一阶 IIR，滤波效果有限
+    <span class="badge badge-file">control.c</span>
+    <span class="badge badge-line">L85</span>
+  </div>
+  <p><strong>问题描述:</strong> 速度测量使用一阶 IIR 滤波 alpha=0.23。在 200Hz 采样率下，截止频率约 7.3Hz。这个滤波器的滚降率为 -20dB/dec，对电机高频噪声抑制不足。且 alpha 值固定，无法在运行时调整。</p>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p>项目已有现成的二阶 Butterworth 滤波器实现（txg_low_pass_filter.c），可直接使用:</p>
+    <pre><code><span class="code-keyword">static struct</span> SecondOrderLowPass_t _speed_lpf;
+<span class="code-keyword">static bool</span> _speed_lpf_inited = <span class="code-keyword">false</span>;
+
+<span class="code-comment">// 在 control_velocity() 中</span>
+<span class="code-func">float</span> measured_speed = (_control.lencode_spd + _control.rencode_spd) * 0.5f;
+<span class="code-keyword">if</span> (!_speed_lpf_inited) {
+    init_second_order_low_pass(&_speed_lpf, 10.0, 200, 0.707, measured_speed);
+    _speed_lpf_inited = <span class="code-keyword">true</span>;
+}
+_control.encode_spd = (<span class="code-func">float</span>)update_second_order_low_pass(
+    &_speed_lpf, (<span class="code-func">double</span>)measured_speed);</code></pre>
+    <p>二阶 Butterworth (Q=0.707) 提供 -40dB/dec 滚降，在相同截止频率下噪声抑制更好。</p>
+  </div>
+</div>
+
+<!-- Issue 10 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-low">低</span>
+    平衡角度偏置为硬编码常量
+    <span class="badge badge-file">control.c</span>
+    <span class="badge badge-line">L8</span>
+  </div>
+  <p><strong>问题描述:</strong> BALANCE_ANGLE = 0.25° 是小车的机械平衡点，硬编码在源码中。不同小车的重心位置不同，平衡角度也不同，每次修改需要重新编译。</p>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p>将平衡角度加入 NET_RA 结构体，通过上位机在线调整，或存储到 EEPROM (项目已有 AT24C512B 驱动):</p>
+    <pre><code><span class="code-comment">// 在 struct CONTROL 中添加</span>
+<span class="code-func">float</span> balance_angle;  <span class="code-comment">// 可调平衡偏置</span>
+
+<span class="code-comment">// control_balance 中使用</span>
+<span class="code-keyword">return</span> _control.balance_kp * (pitch - _control.balance_angle)
+     + _control.balance_kd * pitch_rate;</code></pre>
+  </div>
+</div>
+
+<!-- ===================== Layer 4: Scheduling ===================== -->
+<h2 id="layer4"><span class="icon">5</span> 任务调度层</h2>
+
+<!-- Issue 11 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-mid">中</span>
+    协作式调度器无优先级，I2C 阻塞影响控制实时性
+    <span class="badge badge-file">main.c</span>
+    <span class="badge badge-line">L54-65, L127-142</span>
+  </div>
+  <p><strong>问题描述:</strong> sys_task_run() 是一个简单的轮询式调度器，按数组顺序检查并执行就绪任务。没有优先级抢占机制。如果 mpu_dmp_get_data() 因 I2C 通信阻塞（软件 I2C 可能需要 2-5ms），后续的 Control_Spd_Updte 和 Control_Updte 会被延迟执行，导致控制周期抖动。</p>
+
+  <pre><code><span class="code-comment">// main.c L54-65 — 任务列表（按数组顺序执行）</span>
+<span class="code-keyword">static struct</span> TaskStruct systask[SYS_TASK_NUM] = {
+  {0, 500,  0, Bsp_Gpio_LED_Toggle},
+  {0, 5,    0, mpu_dmp_get_data},      <span class="code-comment">// I2C阻塞 ~2-5ms</span>
+  {0, 5,    0, Control_Spd_Updte},     <span class="code-comment">// 可能被延迟</span>
+  {0, 5,    0, Control_Updte},          <span class="code-comment">// 可能被延迟</span>
+  {0, 20,   0, Net_Link_Decode},
+  {0, 2,    0, Net_Link_Out},
+  {0, 1000, 0, Rcc_Cpu_Loadcal},
+};</code></pre>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <p><strong>短期方案:</strong> 调整任务顺序，将控制任务放在 DMP 读取之后、其他低优先级任务之前，确保控制任务优先执行:</p>
+    <pre><code><span class="code-keyword">static struct</span> TaskStruct systask[SYS_TASK_NUM] = {
+  {0, 5,    0, Control_Spd_Updte},     <span class="code-comment">// 优先: 编码器读取</span>
+  {0, 10,   0, mpu_dmp_get_data},      <span class="code-comment">// 其次: DMP (改为10ms)</span>
+  {0, 5,    0, Control_Updte},          <span class="code-comment">// 优先: 控制计算</span>
+  {0, 20,   0, Net_Link_Decode},       <span class="code-comment">// 低优先级</span>
+  {0, 10,   0, Net_Link_Out},          <span class="code-comment">// 低优先级</span>
+  {0, 500,  0, Bsp_Gpio_LED_Toggle},
+  {0, 1000, 0, Rcc_Cpu_Loadcal},
+};</code></pre>
+    <p><strong>长期方案:</strong> 将控制循环移入定时器中断（如 TIM2），保证严格的固定周期执行；DMP 数据读取放在主循环中以非阻塞方式完成。</p>
+  </div>
+</div>
+
+<!-- ===================== Layer 5: Comm ===================== -->
+<h2 id="layer5"><span class="icon">6</span> 通信层</h2>
+
+<!-- Issue 12 -->
+<div class="card">
+  <div class="card-title">
+    <span class="severity sev-low">低</span>
+    Net_Link_Out 任务频率过高且遥测帧被禁用
+    <span class="badge badge-file">main.c / net_link.c</span>
+    <span class="badge badge-line">L63, L465-487</span>
+  </div>
+  <p><strong>问题描述:</strong> Net_Link_Out 注册为 2ms 任务（最高频率），但内部使用计数器每 5 次才发送一次（10ms 有效周期），其余 4 次空转。同时 TA 帧（传感器遥测数据）的发送被注释掉，只发送 TB 帧（控制参数），无法通过上位机观察传感器原始数据。</p>
+
+  <div class="fix-block">
+    <div class="fix-label">优化建议</div>
+    <ul>
+      <li>将 Net_Link_Out 任务周期从 2ms 改为 10ms，与实际发送频率对齐</li>
+      <li>恢复 TA 帧发送，便于上位机实时调试传感器数据</li>
+      <li>可考虑将 TA/TB 帧交替发送，在不增加带宽的情况下同时获得传感器和控制数据</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== Summary ===================== -->
+<h2 id="summary"><span class="icon">7</span> 优化优先级总结</h2>
+
+<div class="card">
+  <table>
+    <tr>
+      <th>#</th>
+      <th>层级</th>
+      <th>问题</th>
+      <th>严重度</th>
+      <th>改动量</th>
+    </tr>
+    <tr>
+      <td>1</td><td>驱动层</td><td>编码器 ICFilter=0，无硬件滤波</td>
+      <td><span class="severity sev-high">高</span></td><td>极小 (2行)</td>
+    </tr>
+    <tr>
+      <td>2</td><td>驱动层</td><td>软件I2C + DMP 50%空转</td>
+      <td><span class="severity sev-high">高</span></td><td>小 (1行改周期)</td>
+    </tr>
+    <tr>
+      <td>3</td><td>驱动层</td><td>电机死区零点穿越跳变</td>
+      <td><span class="severity sev-mid">中</span></td><td>中 (~15行)</td>
+    </tr>
+    <tr>
+      <td>4</td><td>传感器层</td><td>DMP陀螺仪未滤波直接进PID</td>
+      <td><span class="severity sev-high">高</span></td><td>小 (1行改寄存器)</td>
+    </tr>
+    <tr>
+      <td>5</td><td>传感器层</td><td>~400行IMU代码为死代码</td>
+      <td><span class="severity sev-mid">中</span></td><td>中 (清理/恢复)</td>
+    </tr>
+    <tr>
+      <td>6</td><td>传感器层</td><td>DCM AHRS融合被旁路</td>
+      <td><span class="severity sev-mid">中</span></td><td>大 (需评估)</td>
+    </tr>
+    <tr>
+      <td>7</td><td>控制层</td><td>速度积分缺少dt时间因子</td>
+      <td><span class="severity sev-high">高</span></td><td>中 (~10行)</td>
+    </tr>
+    <tr>
+      <td>8</td><td>控制层</td><td>turn_kd已接收但未使用</td>
+      <td><span class="severity sev-mid">中</span></td><td>小 (~5行)</td>
+    </tr>
+    <tr>
+      <td>9</td><td>控制层</td><td>速度滤波器仅一阶IIR</td>
+      <td><span class="severity sev-mid">中</span></td><td>小 (~5行)</td>
+    </tr>
+    <tr>
+      <td>10</td><td>控制层</td><td>平衡角度硬编码</td>
+      <td><span class="severity sev-low">低</span></td><td>小 (~5行)</td>
+    </tr>
+    <tr>
+      <td>11</td><td>调度层</td><td>无优先级调度，I2C阻塞影响控制</td>
+      <td><span class="severity sev-mid">中</span></td><td>小 (调整顺序)</td>
+    </tr>
+    <tr>
+      <td>12</td><td>通信层</td><td>Net_Link_Out空转+遥测帧禁用</td>
+      <td><span class="severity sev-low">低</span></td><td>小 (~3行)</td>
+    </tr>
+  </table>
+
+  <h4 style="margin-top:24px;">推荐实施顺序（按投入产出比排序）</h4>
+  <ol>
+    <li><strong>第一步（立竿见影, 改动极小）:</strong> Issue #1 编码器滤波 + Issue #2 DMP轮询周期改10ms + Issue #4 MPU LPF寄存器设为3 → 共改4行代码，显著降低噪声和CPU浪费</li>
+    <li><strong>第二步（控制精度提升）:</strong> Issue #7 积分加dt + Issue #8 启用turn_kd + Issue #9 速度改二阶Butterworth</li>
+    <li><strong>第三步（系统健壮性）:</strong> Issue #3 死区平滑过渡 + Issue #11 任务调度重排</li>
+    <li><strong>第四步（代码清理）:</strong> Issue #5/#6 清理死代码或恢复使用 + Issue #10/#12 通信和参数化</li>
+  </ol>
+</div>
+
+<div class="footer">
+  <p>STM32 平衡小车控制优化分析报告 | 自动生成于 2026-09-23 | 项目: STM32F1xx Balance Car</p>
+</div>
+
+</div>
+</body>
+</html>

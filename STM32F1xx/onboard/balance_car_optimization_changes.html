@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STM32 平衡小车优化实施总结</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --surface2: #e8eaed;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --text-dim: #59636e;
+    --accent: #0969da;
+    --green: #1a7f37;
+    --yellow: #9a6700;
+    --red: #cf222e;
+    --purple: #8250df;
+    --orange: #bc4c00;
+    --teal: #1b7c83;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+    line-height: 1.7;
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--accent);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 1.6em;
+  }
+  h2 {
+    color: var(--text);
+    margin: 30px 0 15px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    font-size: 1.25em;
+  }
+  h3 {
+    color: var(--text);
+    margin: 20px 0 10px;
+    font-size: 1.05em;
+  }
+  .phase {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+  }
+  .change {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 15px;
+    margin: 12px 0;
+  }
+  .change-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-bug { background: #ffebe9; color: var(--red); }
+  .badge-high { background: #fff1cf; color: var(--yellow); }
+  .badge-medium { background: #ddf4ff; color: var(--accent); }
+  .badge-low { background: #dafbe1; color: var(--green); }
+  .badge-phase { background: var(--surface2); color: var(--text-dim); }
+  .file-tag {
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 0.85em;
+    color: var(--purple);
+    background: var(--surface);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    overflow-x: auto;
+    font-size: 0.85em;
+    line-height: 1.5;
+    margin: 8px 0;
+  }
+  code {
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 0.9em;
+  }
+  .old { color: var(--red); text-decoration: line-through; }
+  .new { color: var(--green); }
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.9em;
+  }
+  .summary-table th {
+    background: var(--surface);
+    text-align: left;
+    padding: 8px;
+    border: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .summary-table td {
+    padding: 8px;
+    border: 1px solid var(--border);
+  }
+  .summary-table tr:nth-child(even) { background: var(--surface); }
+  .footer {
+    margin-top: 40px;
+    padding: 15px;
+    background: var(--surface);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 0.9em;
+  }
+</style>
+</head>
+<body>
+
+<h1>STM32 平衡小车控制优化实施总结</h1>
+
+<p>按照前期分析的 4 阶段路线图，完成了从底层驱动到控制算法的全链路代码优化。共修改 <strong>10 个文件</strong>，实施 <strong>16 项优化</strong>。</p>
+
+<table class="summary-table">
+  <tr><th>阶段</th><th>修改项数</th><th>涉及文件</th></tr>
+  <tr><td>Phase 1: 底层驱动</td><td>6</td><td>bsp_delay_drv.c, bsp_i2c_drv.c, periph_serial_motor.c, bsp_timer_drv.c, bsp_uart_drv.c</td></tr>
+  <tr><td>Phase 2: 传感器优化</td><td>2</td><td>main.c, periph_mpu60x0.c</td></tr>
+  <tr><td>Phase 3: 控制算法</td><td>5</td><td>control.c, control.h</td></tr>
+  <tr><td>Phase 4: 系统调度</td><td>3</td><td>main.c, control.c, control.h, net_link.c</td></tr>
+</table>
+
+<!-- Phase 1 -->
+<h2>Phase 1: 底层驱动修复</h2>
+<div class="phase">
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-bug">BUG</span>
+    <span class="badge badge-phase">P1-1</span>
+    <strong>延时除数错误修复</strong>
+    <span class="file-tag">bsp_delay_drv.c</span>
+  </div>
+  <p>注释写 <code>/3000000</code>（正确），但代码用了 <code>/6000000</code>，导致所有延时只有预期的一半。I2C 时序中 4μs 延时实际只有 2μs。</p>
+  <pre><code><span class="old">SysCtlDelay(ulCount * (SystemCoreClock/6000000));  // 0.5μs@72MHz</span>
+<span class="new">SysCtlDelay(ulCount * (SystemCoreClock/3000000));  // 1.0μs@72MHz ✓</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-high">高</span>
+    <span class="badge badge-phase">P1-2</span>
+    <strong>I2C SDA 方向切换性能优化</strong>
+    <span class="file-tag">bsp_i2c_drv.c</span>
+  </div>
+  <p>每次切换 SDA 方向都调用 <code>HAL_GPIO_Init</code>（构造结构体+库函数调用≈50+周期），DMP FIFO 读取 28 字节产生约 30 次调用。改为直接操作 CRL/CRH 寄存器（≈5-10 周期）。</p>
+  <pre><code><span class="old">// 旧: 每次构造 GPIO_InitTypeDef + HAL_GPIO_Init (~50 cycles)
+GPIO_InitTypeDef GPIO_InitStruct = {0};
+GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+...
+HAL_GPIO_Init(ioi2c->sda_gpio_port, &GPIO_InitStruct);</span>
+
+<span class="new">// 新: 直接 CRL/CRH 寄存器操作 (~5-10 cycles)
+uint8_t pos = bsp_i2c_pin_pos(ioi2c->sda_gpio_pin);
+*cr = (*cr & ~(0x0FUL << shift)) | (0x03UL << shift);  // output PP 50MHz</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-high">高</span>
+    <span class="badge badge-phase">P1-3</span>
+    <strong>电机方向切换死区时间</strong>
+    <span class="file-tag">periph_serial_motor.c</span>
+  </div>
+  <p>TB6612 H 桥方向反转时无 dead time，存在短路风险。添加方向跟踪变量，切换时先归零 PWM 并延时 5μs。</p>
+  <pre><code>if (motor_dir_prev[0] != 0) {
+    Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH1, 0);  // PWM 归零
+    Bsp_Delay_Us(5);                         // 5μs 死区时间
+}
+TB6612_AN1_H;  // 然后才切换方向
+motor_dir_prev[0] = 0;</code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-high">高</span>
+    <span class="badge badge-phase">P1-4</span>
+    <strong>编码器硬件滤波</strong>
+    <span class="file-tag">bsp_timer_drv.c</span>
+  </div>
+  <p>编码器 ICFilter 从 0（无滤波）改为 4，过滤电机霍尔信号上的毛刺。</p>
+  <pre><code><span class="old">sConfig.IC1Filter = 0;
+sConfig.IC2Filter = 0;</span>
+<span class="new">sConfig.IC1Filter = 4;  // 4 个采样周期滤波
+sConfig.IC2Filter = 4;</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-medium">中</span>
+    <span class="badge badge-phase">P1-5</span>
+    <strong>TIM2 ISR 全局中断禁用移除</strong>
+    <span class="file-tag">bsp_timer_drv.c</span>
+  </div>
+  <p>ISR 中 <code>__disable_irq()</code> 禁用了<strong>所有</strong>中断（包括 UART），改为直接调用（ISR 上下文已提供主循环互斥）。</p>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-low">低</span>
+    <span class="badge badge-phase">P1-6</span>
+    <strong>UART 调试残留清理</strong>
+    <span class="file-tag">bsp_uart_drv.c</span>
+  </div>
+  <p>移除 <code>revlength</code> 和 <code>x</code> 调试变量及其在 RX 回调中的无用计算。</p>
+</div>
+
+</div>
+
+<!-- Phase 2 -->
+<h2>Phase 2: 传感器优化</h2>
+<div class="phase">
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-high">高</span>
+    <span class="badge badge-phase">P2-1</span>
+    <strong>DMP 轮询频率匹配输出频率</strong>
+    <span class="file-tag">main.c</span>
+  </div>
+  <p>DMP FIFO 输出 100Hz，但任务以 200Hz 轮询，50% 的 I2C 读取为空转。将轮询周期从 5ms 改为 10ms，控制环仍保持 200Hz。</p>
+  <pre><code><span class="old">{0, 5,   0, mpu_dmp_get_data},    // 200Hz → 50% 空转</span>
+<span class="new">{0, 10,  0, mpu_dmp_get_data},   // 100Hz = DMP 输出频率 ✓</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-medium">中</span>
+    <span class="badge badge-phase">P2-2</span>
+    <strong>MPU6050 LPF 寄存器修复</strong>
+    <span class="file-tag">periph_mpu60x0.c</span>
+  </div>
+  <p>LPF 从 0x00（256Hz，几乎无滤波）改为 0x02（94Hz），适配 200Hz 控制环路。注：eMPL 库在 DMP 初始化时已自动设为 42Hz，此修复保证本地配置路径也正确。</p>
+</div>
+
+</div>
+
+<!-- Phase 3 -->
+<h2>Phase 3: 控制算法重构</h2>
+<div class="phase">
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-high">高</span>
+    <span class="badge badge-phase">P3-1</span>
+    <strong>速度积分加入显式 dt</strong>
+    <span class="file-tag">control.c</span>
+  </div>
+  <p>原积分 <code>+= speed_error</code> 隐式假设 5ms 周期。改为 <code>+= speed_error * CONTROL_DT</code>，并将 <code>VEL_KI</code> 从 <code>140/200</code> 改为真实增益 <code>140.0f</code>。行为等价但频率无关。</p>
+  <pre><code><span class="old">#define VEL_KI  (140.0f / 200.0f)  // 0.7, 隐含 dt
+_speed_integral += speed_error;   // 无 dt</span>
+
+<span class="new">#define CONTROL_DT  (1.0f / 200.0f)  // 5ms
+#define VEL_KI      140.0f            // 真实增益
+_speed_integral += speed_error * CONTROL_DT;  // 显式 dt ✓</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-medium">中</span>
+    <span class="badge badge-phase">P3-2</span>
+    <strong>死区补偿零点跳变修复</strong>
+    <span class="file-tag">control.c</span>
+  </div>
+  <p>原 <code>magnitude += dead_zone</code> 在零点从 0 跳到 180。改为比例过渡：小 PWM 时按比例补偿，消除跳变。</p>
+  <pre><code><span class="old">magnitude += (float)dead_zone;  // 0→180 跳变</span>
+
+<span class="new">float ratio = fminf(magnitude / dz, 1.0f);
+magnitude = magnitude + dz * ratio;  // 平滑过渡 ✓</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-medium">中</span>
+    <span class="badge badge-phase">P3-3</span>
+    <strong>turn_kd 微分项启用</strong>
+    <span class="file-tag">control.c</span>
+  </div>
+  <p><code>turn_kd</code> 参数已通过通信接收但从未使用。添加微分项：偏航角速度误差的变化率，提供转向阻尼。</p>
+  <pre><code><span class="old">return _control.turn_kp * yaw_rate_error;  // 仅 P</span>
+
+<span class="new">float yaw_rate_deriv = (yaw_rate_error - _prev_yaw_rate_error) / CONTROL_DT;
+_prev_yaw_rate_error = yaw_rate_error;
+return _control.turn_kp * yaw_rate_error
+     + _control.turn_kd * yaw_rate_deriv;  // PD ✓</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-low">低</span>
+    <span class="badge badge-phase">P3-4</span>
+    <strong>float 截断改为四舍五入</strong>
+    <span class="file-tag">control.c</span>
+  </div>
+  <p><code>(int16_t)value</code> 向零截断（1.9→1），改为四舍五入（1.9→2），减少 PWM 量化误差。</p>
+  <pre><code><span class="old">return (int16_t)value;  // 截断</span>
+<span class="new">if (value >= 0.0f) return (int16_t)(value + 0.5f);
+else return (int16_t)(value - 0.5f);  // 四舍五入 ✓</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-medium">中</span>
+    <span class="badge badge-phase">P3-5</span>
+    <strong>速度滤波升级为二阶 Butterworth</strong>
+    <span class="file-tag">control.c</span>
+  </div>
+  <p>一阶 IIR (alpha=0.23) 升级为二阶 Butterworth（fcut=20Hz, Q=0.707），利用项目已有的 <code>txg_low_pass_filter</code> 库。</p>
+  <pre><code><span class="old">_control.encode_spd += 0.23f * (measured_speed - _control.encode_spd);</span>
+
+<span class="new">init_second_order_low_pass(&_speed_lpf, 20.0f, 200.0f, 0.707, 0.0);
+_control.encode_spd = update_second_order_low_pass(&_speed_lpf, measured_speed);</span></code></pre>
+</div>
+
+</div>
+
+<!-- Phase 4 -->
+<h2>Phase 4: 系统调度与通信优化</h2>
+<div class="phase">
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-low">低</span>
+    <span class="badge badge-phase">P4-1</span>
+    <strong>Net_Link_Out 任务间隔修正</strong>
+    <span class="file-tag">main.c</span>
+  </div>
+  <p>注册为 2ms 任务但实际 10ms 才发送（5 次计数器循环），改为 10ms 直接匹配。</p>
+  <pre><code><span class="old">{0, 2,    0, Net_Link_Out},  // 2ms 注册, 10ms 实际</span>
+<span class="new">{0, 10,   0, Net_Link_Out},  // 10ms = 实际发送频率 ✓</span></code></pre>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-low">低</span>
+    <span class="badge badge-phase">P4-2</span>
+    <strong>Net_Link_Out 冗余计数器移除</strong>
+    <span class="file-tag">net_link.c</span>
+  </div>
+  <p>移除 <code>static uint8_t cout</code> 计数器和 5 次循环逻辑，简化为每次调用直接发送 TB 帧。</p>
+</div>
+
+<div class="change">
+  <div class="change-header">
+    <span class="badge badge-low">低</span>
+    <span class="badge badge-phase">P4-3</span>
+    <strong>平衡角度运行时可配置</strong>
+    <span class="file-tag">control.c, control.h</span>
+  </div>
+  <p><code>BALANCE_ANGLE</code> 从 <code>#define</code> 改为运行时变量，新增 <code>Control_Set_BalanceAngle()</code> / <code>Control_Get_BalanceAngle()</code> 接口。</p>
+</div>
+
+</div>
+
+<h2>修改文件清单</h2>
+<table class="summary-table">
+  <tr><th>文件</th><th>修改项</th><th>阶段</th></tr>
+  <tr><td>bsp_delay_drv.c</td><td>延时除数修复</td><td>P1</td></tr>
+  <tr><td>bsp_i2c_drv.c</td><td>SDA 方向切换直接寄存器操作</td><td>P1</td></tr>
+  <tr><td>periph_serial_motor.c</td><td>电机方向切换死区时间</td><td>P1</td></tr>
+  <tr><td>bsp_timer_drv.c</td><td>编码器滤波 + ISR 中断禁用移除</td><td>P1</td></tr>
+  <tr><td>bsp_uart_drv.c</td><td>调试残留清理</td><td>P1</td></tr>
+  <tr><td>periph_mpu60x0.c</td><td>LPF 寄存器修复</td><td>P2</td></tr>
+  <tr><td>main.c</td><td>DMP 轮询频率 + 任务调度</td><td>P2, P4</td></tr>
+  <tr><td>control.c</td><td>积分 dt + 死区 + turn_kd + 舍入 + Butterworth + 平衡角度</td><td>P3, P4</td></tr>
+  <tr><td>control.h</td><td>新增平衡角度接口声明</td><td>P4</td></tr>
+  <tr><td>net_link.c</td><td>Net_Link_Out 简化</td><td>P4</td></tr>
+</table>
+
+<div class="footer">
+  <p><strong>注意事项：</strong></p>
+  <ul>
+    <li>所有 PID 参数的行为等价性已验证（积分 dt 改动前后数学等价）</li>
+    <li>turn_kd 默认值为 0.0f，不影响现有行为，需通过通信接口远程调参启用</li>
+    <li>平衡角度默认仍为 0.25°，可通过 <code>Control_Set_BalanceAngle()</code> 运行时修改</li>
+    <li>建议修改后进行实车调试验证，重点检查 I2C 通信稳定性和电机方向切换平滑性</li>
+  </ul>
+</div>
+
+</body>
+</html>

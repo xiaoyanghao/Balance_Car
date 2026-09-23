@@ -1,0 +1,182 @@
+#include "txg_eeprom.h"
+#include "periph_at24c512b.h"
+
+
+
+/** Extern structer init ************************************************************************ */
+struct param_group_t param_g =
+{
+    /** "param name",   init byte value,    addr_start, addr_offset,    param_length */
+    {
+        {"sca_6sides_calib",  0, EEPROM_PARAM_ACC_6AXIS_ADDR, EEPROM_ACC_SCA_6AXIS_ADDR, EEPROM_ACC_SCA_6AXIS_LENGTH},
+        {"mpu_6sides_calib",  0, EEPROM_PARAM_ACC_6AXIS_ADDR, EEPROM_ACC_MPU_6AXIS_ADDR, EEPROM_ACC_MPU_6AXIS_LENGTH}
+    },
+
+    {
+        {"firm_version",  0, EEPROM_PARAM_COPTER_BASE_ADDR, EEPROM_FIRMWARE_VER_ADDR, EEPROM_FIRMWARE_VER_LENGTH},
+        {"craft_type",    0, EEPROM_PARAM_COPTER_BASE_ADDR, EEPROM_COPTER_TYPE_ADDR,  EEPROM_COPTER_TYPE_LENGTH},
+        {"rotor_base",    0, EEPROM_PARAM_COPTER_BASE_ADDR, EEPROM_COPTER_LEN_ADDR,   EEPROM_COPTER_LEN_LENGTH},
+        {"motor_type",    0, EEPROM_PARAM_COPTER_BASE_ADDR, EEPROM_MOTOR_TYPE_ADDR,   EEPROM_MOTOR_TYPE_LENGTH},
+        {"craft_model",   0, EEPROM_PARAM_COPTER_BASE_ADDR, EEPROM_COPTER_MODEL_ADDR, EEPROM_COPTER_MODEL_LENGTH},
+        {"craft_num",     0, EEPROM_PARAM_COPTER_BASE_ADDR, EEPROM_COPTER_NUM_ADDR,   EEPROM_COPTER_NUM_LENGTH},
+    },
+
+    {
+        {"esc_calib_start",    0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_ESC_CALI_START_ADDR, EEPROM_ESC_CALI_START_LENGTH}, //0  1  1
+        {"gps_mount_ofst",     0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_GPS_POS_OFFSET_ADDR, EEPROM_GPS_POS_OFFSET_LENGTH}, //1  3  4
+        {"imu_mount_ofst",     0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_IMU_POS_OFFSET_ADDR, EEPROM_IMU_POS_OFFSET_LENGTH}, //4  3  7
+        {"rtk_mount_ofst",     0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_RTK_POS_OFFSET_ADDR, EEPROM_RTK_POS_OFFSET_LENGTH}, //64 5  69
+        {"ins_mount_ofst",     0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_INS_POS_OFFSET_ADDR, EEPROM_INS_POS_OFFSET_LENGTH}, //51 5  59
+        {"imu_dir_deg",        0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_IMU_DIR_DEG_ADDR,    EEPROM_IMU_DIR_DEG_LENGTH},    //94 7  101
+        {"mag_range",          0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_COMPASS_RANGE_ADDR,  EEPROM_COMPASS_RANGE_LENGTH},  //7  12 19
+        {"mag1_range",         0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_COMPASS1_RANGE_ADDR, EEPROM_COMPASS1_RANGE_LENGTH}, //70 12 82
+        {"mag2_range",         0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_COMPASS2_RANGE_ADDR, EEPROM_COMPASS2_RANGE_LENGTH}, //82 12 94
+        {"acc_sca_range",      0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_ACC_SCA_RANGE_ADDR,  EEPROM_ACC_SCA_RANGE_LENGTH},  //19 12 31
+        {"acc_mpu_range",      0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_ACC_MPU_RANGE_ADDR,  EEPROM_ACC_MPU_RANGE_LENGTH},  //31 12 43
+        {"trim_sca_angle_rp",  0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_TRIM_SCA_XY_ADDR,    EEPROM_TRIM_SCA_XY_LENGTH},    //43 4  47
+        {"trim_mpu_angle_rp",  0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_TRIM_MPU_XY_ADDR,    EEPROM_TRIM_MPU_XY_LENGTH},    //47 4  51
+
+        {"mag_radius",		   0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_COMPASS_RADIUS_ADDR,  EEPROM_COMPASS_RADIUS_LENGTH},  //101 2 103
+        {"mag1_radius",		   0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_COMPASS1_RADIUS_ADDR, EEPROM_COMPASS1_RADIUS_LENGTH}, //103 2 105
+        {"mag2_radius",		   0, EEPROM_PARAM_CALIB_BASE_ADDR,    EEPROM_COMPASS2_RADIUS_ADDR, EEPROM_COMPASS2_RADIUS_LENGTH}, //105 2 107
+
+        {"rc_type",            0, EEPROM_PARAM_RC_CALIB_BASE_ADDR, EEPROM_RC_TYPE_ADDR,        EEPROM_RC_TYPE_LENGTH},
+        {"rc_input_rev",       0, EEPROM_PARAM_RC_CALIB_BASE_ADDR, EEPROM_RCINPUT_REV_ADDR,    EEPROM_RCINPUT_REV_LENGTH},
+        {"rc_range",           0, EEPROM_PARAM_RC_CALIB_BASE_ADDR, EEPROM_RC_RANGE_ADDR,       EEPROM_RC_RANGE_LENGTH},
+
+        {"imu_vti_gyro_offset", 0, EEPROM_PARAM_CALIB_BASE_ADDR,   EEPROM_IMU1_GYRO_OFFSET_ADDR,  EEPROM_IMU1_GYRO_OFFSET_LENGTH},   //107 6 113
+        {"imu_mpu_gyro_offset", 0, EEPROM_PARAM_CALIB_BASE_ADDR,   EEPROM_IMU2_GYRO_OFFSET_ADDR,  EEPROM_IMU2_GYRO_OFFSET_LENGTH}    //113 6 119
+
+    },
+
+    {
+        {"mag_dir_deg",         0, EEPROM_PARAM_CALIB2_BASE_ADDR,  EEPROM_COMPASS_DIR_DEG_ADDR,    EEPROM_COMPASS_DIR_DEG_LENGTH},     //0 7 7
+        {"mag1_dir_deg",        0, EEPROM_PARAM_CALIB2_BASE_ADDR,  EEPROM_COMPASS1_DIR_DEG_ADDR,   EEPROM_COMPASS_DIR_DEG_LENGTH},     //7 7 14
+        {"mag2_dir_deg",        0, EEPROM_PARAM_CALIB2_BASE_ADDR,  EEPROM_COMPASS2_DIR_DEG_ADDR,   EEPROM_COMPASS_DIR_DEG_LENGTH},     //14 7 21
+        {"acc_cali_para",       0, EEPROM_PARAM_CALIB2_BASE_ADDR, EEPROM_ADVANCED_CALI_ACC_ADDR, EEPROM_ADVANCED_CALI_ACC_LENGTH},     //21 49 70
+        {"gyro_cali_para",      0, EEPROM_PARAM_CALIB2_BASE_ADDR, EEPROM_ADVANCED_CALI_GYRO_ADDR, EEPROM_ADVANCED_CALI_GYRO_LENGTH},   // 70 49 119
+    },
+
+    {
+        {"lpf_fcut_rate_ctrl",  0, EEPROM_CTRLPARAM_GP1_BASE_ADDR, EEPROM_LPF_FCUT_RATECTRL_ADDR, EEPROM_LPF_FCUT_RATECTRL_LENGTH},
+        {"lpf_fcut_acc_nav",    0, EEPROM_CTRLPARAM_GP1_BASE_ADDR, EEPROM_LPF_FCUT_ACCNAV_ADDR,   EEPROM_LPF_FCUT_ACCNAV_LENGTH},
+        {"lpf_fcut_velz_err",   0, EEPROM_CTRLPARAM_GP1_BASE_ADDR, EEPROM_LPF_VELZ_ERR_ADDR,      EEPROM_LPF_VELZ_ERR_LENGTH},
+        {"lpf_fcut_accz_err",   0, EEPROM_CTRLPARAM_GP1_BASE_ADDR, EEPROM_LPF_ACCZ_ERR_ADDR,      EEPROM_LPF_ACCZ_ERR_LENGTH}
+    },
+
+    {
+        {"rc_feel_rp",     0, EEPROM_CTRLPARAM_GP2_BASE_ADDR, EEPROM_PILOT_RC_FEEL_RP_ADDR,  EEPROM_PILOT_RC_FEEL_RP_LENGTH},	// 0
+        {"rc_feel_yaw",    0, EEPROM_CTRLPARAM_GP2_BASE_ADDR, EEPROM_PILOT_RC_FEEL_YAW_ADDR, EEPROM_PILOT_RC_FEEL_YAW_LENGTH},	// 1
+        {"pid_angle_rp",   0, EEPROM_CTRLPARAM_GP2_BASE_ADDR, EEPROM_PID_ANGLE_RP_ADDR,      EEPROM_PID_ANGLE_RP_LENGTH},		// 2-25
+        {"pid_angle_yaw",  0, EEPROM_CTRLPARAM_GP2_BASE_ADDR, EEPROM_PID_ANGLE_YAW_ADDR,     EEPROM_PID_ANGLE_YAW_LENGTH},		// 26-37
+        {"pid_rate_rp",    0, EEPROM_CTRLPARAM_GP2_BASE_ADDR, EEPROM_PID_RATE_RP_ADDR,       EEPROM_PID_RATE_RP_LENGTH},		// 38-61
+        {"pid_rate_yaw",   0, EEPROM_CTRLPARAM_GP2_BASE_ADDR, EEPROM_PID_RATE_YAW_ADDR,      EEPROM_PID_RATE_YAW_LENGTH}		// 62-73
+    },
+
+    {
+        {"pid_pos_xy",  0, EEPROM_CTRLPARAM_GP3_BASE_ADDR, EEPROM_PID_POS_XY_ADDR, EEPROM_PID_POS_XY_LENGTH},
+        {"pid_pos_z",   0, EEPROM_CTRLPARAM_GP3_BASE_ADDR, EEPROM_PID_POS_Z_ADDR,  EEPROM_PID_POS_Z_LENGTH},
+        {"pid_vel_xy",  0, EEPROM_CTRLPARAM_GP3_BASE_ADDR, EEPROM_PID_VEL_XY_ADDR, EEPROM_PID_VEL_XY_LENGTH},
+        {"pid_vel_z",   0, EEPROM_CTRLPARAM_GP3_BASE_ADDR, EEPROM_PID_VEL_Z_ADDR,  EEPROM_PID_VEL_Z_LENGTH},
+        {"pid_acc_xy",  0, EEPROM_CTRLPARAM_GP3_BASE_ADDR, EEPROM_PID_ACC_XY_ADDR, EEPROM_PID_ACC_XY_LENGTH},
+        {"pid_acc_z",   0, EEPROM_CTRLPARAM_GP3_BASE_ADDR, EEPROM_PID_ACC_Z_ADDR,  EEPROM_PID_ACC_Z_LENGTH}
+    },
+
+    {
+        {"motor_idle",             0, EEPROM_CTRLPARAM_GP4_BASE_ADDR, EEPROM_MOTOR_IDLE_ADDR,            EEPROM_MOTOR_IDLE_LENGTH},
+        {"rtl_alt",                0, EEPROM_CTRLPARAM_GP4_BASE_ADDR, EEPROM_RTL_ALT_ADDR,               EEPROM_RTL_ALT_LENGTH},
+        {"rtl_head_strategy",      0, EEPROM_CTRLPARAM_GP4_BASE_ADDR, EEPROM_RTL_HEAD_STRATEGY_ADDR,     EEPROM_RTL_HEAD_STRATEGY_LENGTH},
+        {"active_time",            0, EEPROM_CTRLPARAM_GP4_BASE_ADDR, EEPROM_ACTIVE_TIME_ADDR,           EEPROM_ACTIVE_TIME_LENGTH},
+        {"flt_time_since_active",  0, EEPROM_CTRLPARAM_GP4_BASE_ADDR, EEPROM_FLT_TIME_SINCE_ACTIVE_ADDR, EEPROM_FLT_TIME_SINCE_ACTIVE_LENGTH},
+    },
+
+    {
+        {"update_flag",       0, EEPROM_PARAM_IAP_BASE_ADDR, EEPROM_IAP_UPDATE_ADDR,      EEPROM_IAP_UPDATE_LENGTH},
+        {"update_over_flag",  0, EEPROM_PARAM_IAP_BASE_ADDR, EEPROM_IAP_UPDATE_OVER_ADDR, EEPROM_IAP_UPDATE_OVER_LENGTH},
+        {"app_len",           0, EEPROM_PARAM_IAP_BASE_ADDR, EEPROM_IAP_APP_LEN_ADDR,     EEPROM_IAP_APP_LEN_LENGTH},
+        {"app_crc",           0, EEPROM_PARAM_IAP_BASE_ADDR, EEPROM_IAP_CRC_ADDR,         EEPROM_IAP_CRC_LENGTH}
+    },
+
+    {
+        {"fs_batt_lv",      	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_LOW_BATT_VOT_ADDR,   	EEPROM_LOW_BATT_VOT_LENGTH},
+        {"fs_batt_lc",      	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_LOW_BATT_CAP_ADDR,   	EEPROM_LOW_BATT_CAP_LENGTH},
+        {"rc_fs",           	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_RC_FS_ADDR,          	EEPROM_RC_FS_LENGTH},
+        {"api_fs",          	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_API_FS_ADDR,         	EEPROM_API_FS_LENGTH},
+        {"fence_alt",       	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_FENCE_ALT_ADDR,      	EEPROM_FENCE_ALT_LENGTH},
+        {"fence_radius",    	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_FENCE_RADIUS_ADDR,   	EEPROM_FENCE_RADIUS_LENGTH},
+        {"max_vel_xy",     	 	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_MAX_VEL_XY_ADDR,     	EEPROM_MAX_VEL_XY_LENGTH},
+        {"max_vel_z",       	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_MAX_VEL_Z_ADDR,      	EEPROM_MAX_VEL_Z_LENGTH},
+        {"max_angle_rp",    	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_MAX_ANGLE_RP_ADDR,   	EEPROM_MAX_ANGLE_RP_LENGTH},
+        {"max_rate_angle",  	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_MAX_RATE_ANGLE_ADDR, 	EEPROM_MAX_RATE_ANGLE_LENGTH},
+        {"max_accel_xy",    	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_MAX_ACCEL_XY_ADDR,   	EEPROM_MAX_ACCEL_XY_LENGTH},
+        {"max_accel_z",     	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_MAX_ACCEL_Z_ADDR,    	EEPROM_MAX_ACCEL_Z_LENGTH},
+        {"max_brake_angle", 	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_MAX_BRAKE_ANGLE_ADDR,	EEPROM_MAX_BRAKE_ANGLE_LENGTH},
+        {"max_brake_rate",  	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_MAX_BRAKE_RATE_ADDR, 	EEPROM_MAX_BRAKE_RATE_LENGTH},
+        {"brake_gain",      	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_BRAKE_GAIN_ADDR,     	EEPROM_BRAKE_GAIN_LENGTH},
+        {"link_fs_strategy", 	0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_LINK_FS_STRATEGY_ADDR,	EEPROM_LINK_FS_STRATEGY_LENGTH},
+        //add for FDR log mode
+        {"fdr_log_mode_switch", 0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_FDR_LOG_MODE_ADDR,       EEPROM_FDR_LOG_MODE_LENGTH},
+        //add for overweight detection
+        {"overweight_detect", 0, EEPROM_PARAM_SAFE_BASE_ADDR, EEPROM_OVERWEIGHT_DETECT, EEPROM_OVERWEIGHT_LENGTH},
+    },
+
+    {
+        {"device_enable",  0,  EEPROM_PARAM_OTHERS_ADDR,    EEPROM_DEVICE_ENABLE_ADDR,  EEPROM_DEVICE_ENABLE_LENGTH},
+        {"radar_sens_up",  0,  EEPROM_PARAM_OTHERS_ADDR,    EEPROM_RADAR_SENS_UP_ADDR,  EEPROM_RADAR_SENS_UP_LENGTH},
+        {"radar_sens_down",0,  EEPROM_PARAM_OTHERS_ADDR,    EEPROM_RADAR_SENS_DOWN_ADDR,EEPROM_RADAR_SENS_DOWN_LENGTH},
+        {"radar_vel_up",   0,  EEPROM_PARAM_OTHERS_ADDR,    EEPROM_RADAR_VEL_UP_ADDR,   EEPROM_RADAR_VEL_UP_LENGTH},
+        {"radar_vel_down", 0,  EEPROM_PARAM_OTHERS_ADDR,    EEPROM_RADAR_VEL_DOWN_ADDR, EEPROM_RADAR_VEL_DOWN_LENGTH},
+        {"radar_work_alt", 0,  EEPROM_PARAM_OTHERS_ADDR,    EEPROM_RADAR_WORK_ALT_ADDR, EEPROM_RADAR_WORK_ALT_LENGTH},
+		{"radar_type",     0,  EEPROM_PARAM_OTHERS_ADDR,    EEPROM_RADAR_TYPE_ADDR,     EEPROM_RADAR_TYPE_LENGTH},
+		{"sens_for_m2",        0,  EEPROM_SENS_PARAM_BASE_ADDR, EEPROM_SENS_PARAM_ADDR,     EEPROM_SENS_PARAM_LENGTH},			// 0-9
+    	{"sens_additional",    0,  EEPROM_SENS_PARAM_BASE_ADDR, EEPROM_SENS_ADD_PARAM_ADDR, EEPROM_SENS_ADD_PARAM_LENGTH},		// 16-31
+    	{"gravity_moment",     0,  EEPROM_SENS_PARAM_BASE_ADDR, EEPROM_G_MOMENT_PARAM_ADDR, EEPROM_G_MOMENT_PARAM_LENGTH},		// 32-38
+    	{"tele_freq_api",  0,  EEPROM_TELE_FREQ_PARAM_BASE_ADDR, EEPROM_API_PARAM_ADDR, EEPROM_API_PARAM_LENGTH},
+        {"tele_freq_gcs",  0,  EEPROM_TELE_FREQ_PARAM_BASE_ADDR, EEPROM_GCS_PARAM_ADDR, EEPROM_GCS_PARAM_LENGTH}
+    },
+
+    {
+        {"wp_total",          0, EEPROM_PARAM_WP_BASE_ADDR, EEPROM_WP_TOTAL_ADDR,         EEPROM_WP_TOTAL_LENGTH},
+        {"wp_repeat_cycle",   0, EEPROM_PARAM_WP_BASE_ADDR, EEPROM_WP_REPEAT_CYCLE_ADDR,  EEPROM_WP_REPEAT_CYCLE_LENGTH},
+        {"wp_turn_type",      0, EEPROM_PARAM_WP_BASE_ADDR, EEPROM_WPTURN_TYPE_ADDR,      EEPROM_WPTURN_TYPE_LENGTH},
+        {"wp_lost_strategy",  0, EEPROM_PARAM_WP_BASE_ADDR, EEPROM_WP_LOST_STRATEGY_ADDR, EEPROM_WP_LOST_STRATEGY_LENGTH},
+        {"track_index",       0, EEPROM_PARAM_WP_BASE_ADDR, EEPROM_WP_TRACK_INDEX_ADDR,   EEPROM_WP_TRACK_INDEX_LENGTH},
+        {"wp_packet_index",   0, EEPROM_PARAM_WP_BASE_ADDR, EEPROM_WP_PACKET_INDEX_ADDR,  EEPROM_WP_TRACK_INDEX_LENGTH},
+        {"wp_start",          0, EEPROM_WP_START_BYTE,      0,                            EEPROM_WP_SIZE}
+    }
+};
+
+
+/** Function declaration ************************************************************************ */
+/**
+ * init eeprom.
+ */
+void eeprom_init(void)
+{
+    at24cxx_init();
+}
+
+/**
+ * @brief	Read specified length of data in specified address of EEPROM
+ * @param	address: specified add to read
+ * @param	length: length of data to be read in byte
+ * @param	data: buffer to store read data
+ */
+void eeprom_read_data(uint16_t address, uint8_t length, uint8_t *data)
+{
+    at24cxx_read_data(address, length, data);
+}
+
+/**
+ * @brief	Write buffer data to specified address
+ * @param	address: which position to be written
+ * @param	length: data length to be written
+ * @param	data: buffer which stored data
+ */
+void eeprom_write_data(uint16_t address,uint8_t length, uint8_t *data)
+{
+    at24cxx_write_data(address, length, data);
+}
+
+
+/** END OF FiLE ************************************************************* */
