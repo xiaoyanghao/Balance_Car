@@ -3,14 +3,16 @@
 #include "imu.h"
 #include "txg_ahrs_fusion.h"
 #include "txg_low_pass_filter.h"
+#include <stdbool.h>
+#include <stdint.h>
 #include <math.h>
 #include <string.h>
 
 #define BALANCE_ANGLE_DEFAULT       0.25f
-#define BALANCE_KP                 (120.0f * 0.6f)
-#define BALANCE_KD                 (12.55f * 0.6f)
-#define VEL_KP                     140.0f
-#define VEL_KI                     140.0f
+#define BALANCE_KP                 -180.0f
+#define BALANCE_KD                 -10.0f
+#define VEL_KP                     200.0f
+#define VEL_KI                     200.0 * 0.005f
 #define TURN_KP                    2.4f
 
 #define CONTROL_DT                 (1.0f / 200.0f)   /* 200Hz control loop = 5ms */
@@ -21,11 +23,11 @@
 #define LIMIT_PWM                  6000.0f
 #define TARGET_SPEED_LIMIT         200
 #define TARGET_YAW_RATE_LIMIT      180.0f
-#define FALL_ANGLE_DEG             30.0f
+#define FALL_ANGLE_DEG             60.0f
 #define IMU_TIMEOUT_MS             30U
 #define COMMAND_TIMEOUT_MS         300U
-#define L_MOTOR_PWM_DEAD           180U
-#define R_MOTOR_PWM_DEAD           180U
+#define L_MOTOR_PWM_DEAD           20U
+#define R_MOTOR_PWM_DEAD           20U
 #define MOTOR_DIR_STOP             2U
 
 static struct CONTROL _control;
@@ -40,6 +42,15 @@ static float clamp_float(float value, float min_value, float max_value)
   if (value < min_value) return min_value;
   if (value > max_value) return max_value;
   return value;
+}
+
+static float normalize_angle_180(float angle_deg)
+{
+  while (angle_deg > 180.0f)
+    angle_deg -= 360.0f;
+  while (angle_deg < -180.0f)
+    angle_deg += 360.0f;
+  return angle_deg;
 }
 
 static int16_t float_to_i16(float value)
@@ -175,6 +186,7 @@ static bool control_parameters_are_valid(const struct NET_RA *param)
 void Control_Init(void)
 {
   memset(&_control, 0, sizeof(_control));
+  /* 直立环单独调试: 速度环/转向环参数置零, 仅保留 balance_kp / balance_kd */
   _control.balance_kp = BALANCE_KP;
   _control.balance_kd = BALANCE_KD;
   _control.vel_kp = VEL_KP;
@@ -182,6 +194,9 @@ void Control_Init(void)
   _control.turn_kp = TURN_KP;
   _control.turn_kd = 0.0f;
   _control.enable_cmd = 0;
+  _control.turn_kp = 0.0f;
+  _control.turn_kd = 0.00f;
+  _control.taget_yaw = 00.0f;
   _control.fault = CONTROL_FAULT_NONE;
   _last_command_ms = HAL_GetTick();
   control_stop_motors(true);
@@ -189,10 +204,19 @@ void Control_Init(void)
 
 void Control_Spd_Updte(void)
 {
-  _control.lencode_spd = Periph_Motor_Get_Encoder(MOTORL_ID);
-  _control.rencode_spd = Periph_Motor_Get_Encoder(MOTORR_ID);
-  _control.l_dir = Periph_Motor_Get_Dir(MOTORL_ID);
-  _control.r_dir = Periph_Motor_Get_Dir(MOTORR_ID);
+  int16_t delta = 0;
+  MOTOR_DIR dir = MOTOR_DF;
+
+  /* 每个周期对每个电机采样一次: 速度与方向来自同一次读数, 符号必然一致
+     (旧实现的方向取自计数器的瞬时计数方向, 与整周期净脉冲的符号可能相反)。
+     速度单位 = 编码器脉冲数 / 采样周期(5ms)。 */
+  Periph_Motor_Get_Encoder_Data(MOTORL_ID, &delta, &dir);
+  _control.lencode_spd = delta;
+  _control.l_dir = (uint8_t)dir;
+
+  Periph_Motor_Get_Encoder_Data(MOTORR_ID, &delta, &dir);
+  _control.rencode_spd = delta;
+  _control.r_dir = (uint8_t)dir;
 }
 
 void Control_Updte(void)
@@ -202,29 +226,34 @@ void Control_Updte(void)
   float turn_pwm;
   float left_pwm;
   float right_pwm;
+  ahrs_attitude_t attitude;
 
   _control.tick = HAL_GetTick();
 
+  _control.enable_cmd = 1;
+  /* 使能状态只由 Control_Set_Enable() 决定 (上位机 RB 帧的 arm/disarm 字段) 或
+     由 Control_Init() 复位。这里绝不能强制置位, 否则 dismount/急停命令会被
+     下一个 5ms 控制周期立刻覆盖, 电机永远停不下来。 */
   if (!_control.enable_cmd) {
     _control.fault = CONTROL_FAULT_NONE;
+    _control.active = 0;
     control_stop_motors(true);
     return;
   }
 
-  if (_control.fault != CONTROL_FAULT_NONE) {
-    control_stop_motors(true);
-    return;
-  }
-
-  if (!mpu_dmp_data_is_fresh(IMU_TIMEOUT_MS)) {
+  /* 姿态由融合任务发布: 这里一次读取同一时刻的 roll/pitch/yaw 快照,
+     快照无效或过期说明融合任务没在跑, 立即停机而不是用旧角度继续控制 */
+  if (!ahrs_attitude_is_fresh(IMU_TIMEOUT_MS) || !ahrs_get_attitude(&attitude)) {
     _control.fault = CONTROL_FAULT_IMU_TIMEOUT;
     control_stop_motors(true);
     return;
   }
 
-  _control.pitch = (float)get_pitch_deg();
+  _control.fault = CONTROL_FAULT_NONE;
+
+  _control.pitch = normalize_angle_180((float)attitude.pitch_deg);
   _control.pitch_gyro = (float)imu_get_gyro(IMU_INSTANCE_MPU, 1);
-  _control.yaw = (float)get_yaw_deg();
+  _control.yaw = normalize_angle_180((float)attitude.yaw_deg);
   _control.yaw_gyro = (float)imu_get_gyro(IMU_INSTANCE_MPU, 2);
 
   if (!control_value_is_valid(_control.pitch) ||
@@ -242,10 +271,10 @@ void Control_Updte(void)
     return;
   }
 
-  if ((uint32_t)(HAL_GetTick() - _last_command_ms) > COMMAND_TIMEOUT_MS) {
-    _control.taget_spd = 0;
-    _control.taget_yaw = 0.0f;
-  }
+//  if ((uint32_t)(HAL_GetTick() - _last_command_ms) > COMMAND_TIMEOUT_MS) {
+//    _control.taget_spd = 0;
+//    _control.taget_yaw = 0.0f;
+//  }
 
   _control.active = 1;
   balance_pwm = control_balance(_control.pitch, _control.pitch_gyro);

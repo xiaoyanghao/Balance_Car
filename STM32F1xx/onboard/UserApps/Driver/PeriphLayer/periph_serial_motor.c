@@ -29,6 +29,10 @@
 
 /* Private define ------------------------------------------------------------*/
 #define TB6612_XNCLK_ENABLE()       __HAL_RCC_GPIOC_CLK_ENABLE()
+
+/* 换向死区时间: PWM 归零生效后、方向引脚翻转前的等待时间, 单位 us */
+#define MOTOR_DIR_DEADTIME_US       5
+
     
 /* Definition for TIM2 CH gpio Pins */   
 #define TB6612_PORT                  GPIOC
@@ -118,19 +122,40 @@ void Periph_Motor_Set_Out(uint8_t which_motor, uint16_t val)
 }
 
 /**
+  * @brief  换向前把 PWM 真正拉到 0, 并等待死区时间
+  * @param[in]  which_motor: 电机ID
+  * @note   PWM 通道带预装载, 只写 CCR=0 要等一个 PWM 周期才生效, 所以这里
+  *         显式触发一次更新事件让 0 立即输出, 再等死区时间让 H 桥完全关断,
+  *         之后才允许翻转方向引脚。
+  */
+static void periph_motor_prepare_direction_switch(uint8_t which_motor)
+{
+  if (which_motor == MOTORL_ID) {
+    Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH1, 0);
+    Bsp_Tim1_Chx_Force_Update(TIM1_CH1);
+  } else if (which_motor == MOTORR_ID) {
+    Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH4, 0);
+    Bsp_Tim1_Chx_Force_Update(TIM1_CH4);
+  } else {
+    return;
+  }
+
+  Bsp_Delay_Us(MOTOR_DIR_DEADTIME_US);
+}
+
+/**
   * @brief   设置电机向前转
   * @param[in]  which_motor: 电机ID
   *             @arg @ref MOTORL_ID  左电机
   *             @arg @ref MOTORR_ID  右电机
-  * @note    方向切换时先归零PWM并插入5μs死区时间，防止H桥直通短路
+  * @note    方向切换时先归零PWM并插入死区时间，防止H桥直通短路
   */
 void Periph_Motor_Set_DF(uint8_t which_motor)
 {
   switch (which_motor) {
   case MOTORL_ID:
       if (motor_dir_prev[0] != 0) {
-        Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH1, 0);
-        Bsp_Delay_Us(5);
+        periph_motor_prepare_direction_switch(MOTORL_ID);
       }
       TB6612_AN1_H;
       TB6612_AN2_L;
@@ -138,8 +163,7 @@ void Periph_Motor_Set_DF(uint8_t which_motor)
     break;
    case MOTORR_ID:
       if (motor_dir_prev[1] != 0) {
-        Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH4, 0);
-        Bsp_Delay_Us(5);
+        periph_motor_prepare_direction_switch(MOTORR_ID);
       }
       TB6612_BN1_L;
       TB6612_BN2_H;
@@ -155,7 +179,7 @@ void Periph_Motor_Set_DF(uint8_t which_motor)
   * @param[in]  which_motor: 电机ID
   *             @arg @ref MOTORL_ID  左电机
   *             @arg @ref MOTORR_ID  右电机
-  * @note    方向切换时先归零PWM并插入5μs死区时间，防止H桥直通短路
+  * @note    方向切换时先归零PWM并插入死区时间，防止H桥直通短路
   */
 void Periph_Motor_Set_DB(uint8_t which_motor)
 {
@@ -163,8 +187,7 @@ void Periph_Motor_Set_DB(uint8_t which_motor)
   switch (which_motor) {
   case MOTORL_ID:
       if (motor_dir_prev[0] != 1) {
-        Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH1, 0);
-        Bsp_Delay_Us(5);
+        periph_motor_prepare_direction_switch(MOTORL_ID);
       }
       TB6612_AN1_L;
       TB6612_AN2_H;
@@ -172,8 +195,7 @@ void Periph_Motor_Set_DB(uint8_t which_motor)
     break;
    case MOTORR_ID:
       if (motor_dir_prev[1] != 1) {
-        Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH4, 0);
-        Bsp_Delay_Us(5);
+        periph_motor_prepare_direction_switch(MOTORR_ID);
       }
       TB6612_BN1_H;
       TB6612_BN2_L;
@@ -189,17 +211,21 @@ void Periph_Motor_Set_DB(uint8_t which_motor)
   * @param[in]  which_motor: 电机ID
   *             @arg @ref MOTORL_ID  左电机
   *             @arg @ref MOTORR_ID  右电机
+  * @note    同时把 PWM 归零: "停转"必须是自包含的, 不能依赖调用方先调
+  *          Periph_Motor_Set_Out(0), 否则残留占空比会在停止命令后继续驱动电机。
   */
 void Periph_Motor_Set_ST(uint8_t which_motor)
 {
 
   switch (which_motor) {
   case MOTORL_ID:
+      Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH1, 0);
       TB6612_AN1_L;
       TB6612_AN2_L;
       motor_dir_prev[0] = 2;
     break;
    case MOTORR_ID:
+      Bsp_Tim1_Chx_Set_Ccrout(TIM1_CH4, 0);
       TB6612_BN1_L;
       TB6612_BN2_L;
       motor_dir_prev[1] = 2;
@@ -218,54 +244,92 @@ void Periph_Motor_Stop_All(void)
   Periph_Motor_Set_ST(MOTORR_ID);
 }
 
+/* Private variables ---------------------------------------------------------*/
 /**
-  * @brief   获取编码器值
+ * 最近一次编码器采样的结果。
+ * 速度取自"本采样周期内的净脉冲数", 方向直接由该值的符号给出, 因此两者
+ * 永远自洽; 旧实现用计数器的瞬时计数方向判断, 与整周期净脉冲的符号可能
+ * 相反(遥测上表现为"速度为负但方向显示前进")。
+ */
+static int16_t motor_speed_last[2] = {0, 0};
+static MOTOR_DIR motor_dir_last[2] = {MOTOR_DF, MOTOR_DF};
+
+/**
+  * @brief   采样编码器, 同时得到速度与转动方向
   * @param[in]  which_motor: 电机ID
   *             @arg @ref MOTORL_ID  左电机
   *             @arg @ref MOTORR_ID  右电机
-  * @retval  编码器值
+  * @param[out] delta: 本采样周期内的净脉冲数(有符号), 允许传入 NULL
+  * @param[out] dir  : 与 delta 符号一致的转动方向, 允许传入 NULL
+  * @note   速度单位是"编码器脉冲数 / 采样周期", 本工程采样周期 5ms(200Hz)。
+  *
+  *         换算成物理量的参数 (见本文件头部):
+  *           编码器 11 线/圈, 减速比 34 => 输出轴 374 线/圈
+  *           TIM 工作在 TI12(四倍频) => 1496 计数/圈
+  *           轮径 60mm => 每计数 0.126mm
+  *           1 脉冲/周期 = 200 计数/s = 25.2 mm/s
+  *           满速 350rpm(输出轴) 约 44 脉冲/周期
   */
-int16_t Periph_Motor_Get_Encoder(uint8_t which_motor)
+void Periph_Motor_Get_Encoder_Data(uint8_t which_motor, int16_t *delta, MOTOR_DIR *dir)
 {
-  int16_t cout = 0;
+  int16_t value = 0;
+
   switch (which_motor) {
   case MOTORL_ID:
-    cout = -Bsp_Timx_Get_Encoder_Count(TIM5_ID);
+    value = -Bsp_Timx_Get_Encoder_Count(TIM5_ID);
     break;
    case MOTORR_ID:
-    cout = Bsp_Timx_Get_Encoder_Count(TIM3_ID);
+    value = Bsp_Timx_Get_Encoder_Count(TIM3_ID);
     break; 
   default:
-    break;
+    return;
   }
-  return cout;
+
+  motor_speed_last[which_motor] = value;
+  motor_dir_last[which_motor] = (value < 0) ? MOTOR_DB : MOTOR_DF;
+
+  if (delta != 0) {
+    *delta = value;
+  }
+  if (dir != 0) {
+    *dir = motor_dir_last[which_motor];
+  }
 }
 
 /**
-  * @brief   获取电机旋转方向
+  * @brief   返回最近一次采样得到的速度
   * @param[in]  which_motor: 电机ID
-  *             @arg @ref MOTORL_ID  左电机
-  *             @arg @ref MOTORR_ID  右电机
-  * @retval  编码器值
+  * @retval  脉冲数/采样周期, 有符号; 尚未采样时返回 0
+  * @note    不访问硬件
+  */
+int16_t Periph_Motor_Get_Encoder_Speed(uint8_t which_motor)
+{
+  switch (which_motor) {
+  case MOTORL_ID:
+    return motor_speed_last[0];
+   case MOTORR_ID:
+    return motor_speed_last[1];
+  default:
+    return 0;
+  }
+}
+
+/**
+  * @brief   返回最近一次采样得到的电机转动方向
+  * @param[in]  which_motor: 电机ID
+  * @retval  MOTOR_DF / MOTOR_DB, 与 Periph_Motor_Get_Encoder_Speed() 符号一致
+  * @note    不访问硬件
   */
 MOTOR_DIR Periph_Motor_Get_Dir(uint8_t which_motor)
 {
-  MOTOR_DIR motor_dir = MOTOR_DF;
-  uint8_t encoder_dir = 0;
   switch (which_motor) {
   case MOTORL_ID:
-    encoder_dir = Bsp_Timx_Get_Encoder_Dir(TIM5_ID);
-    break;
+    return motor_dir_last[0];
    case MOTORR_ID:
-    encoder_dir = !Bsp_Timx_Get_Encoder_Dir(TIM3_ID);  
-    break; 
+    return motor_dir_last[1];
   default:
-    break;
+    return MOTOR_DF;
   }
-  if(!encoder_dir){
-    motor_dir = MOTOR_DB;
-  }
-  return motor_dir;
 }
 
 

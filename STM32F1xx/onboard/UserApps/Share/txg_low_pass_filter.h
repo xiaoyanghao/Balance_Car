@@ -34,7 +34,7 @@
  *  Ts: sampling period
  *  tau: time constant
  */
-__packed struct SecondOrderLowPass_t
+struct SecondOrderLowPass_t
 {
     double a[2]; ///< denominator gains
     double b[2]; ///< numerator gains
@@ -42,7 +42,7 @@ __packed struct SecondOrderLowPass_t
     double o[2]; ///< output history
 };
 
-__packed struct FirstOrderLowPass_t
+struct FirstOrderLowPass_t
 {
     double a[2]; ///< denominator gains
     double b[2]; ///< numerator gains
@@ -53,13 +53,13 @@ __packed struct FirstOrderLowPass_t
  *
  * using two cascaded second order filters
  */
-__packed struct Butterworth4LowPass_t
+struct Butterworth4LowPass_t
 {
     struct SecondOrderLowPass_t lp1;
     struct SecondOrderLowPass_t lp2;
 };
 
-__packed struct Butterworth6LowPass_t
+struct Butterworth6LowPass_t
 {
     struct SecondOrderLowPass_t lp_6th_1;
     struct SecondOrderLowPass_t lp_6th_2;

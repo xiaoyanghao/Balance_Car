@@ -53,10 +53,18 @@
 
 void Bsp_Tim1_Outinit(uint16_t ccr_init1,uint16_t ccr_init4);
 void Bsp_Tim1_Chx_Set_Ccrout(uint8_t timx_chx, uint16_t ccr_output);
+/** 立即装载 CCR 影子寄存器(不等下一个更新事件), 换向时保证 PWM 已真正为 0 */
+void Bsp_Tim1_Chx_Force_Update(uint8_t timx_chx);
 void Bsp_Timx_Encoderinit(uint8_t tim_id);
+/** 编码器自上次调用以来的净脉冲数(有符号), 差值法读取, 不会丢计数 */
 int16_t Bsp_Timx_Get_Encoder_Count(uint8_t timx_chx);
-uint8_t Bsp_Timx_Get_Encoder_Dir(uint8_t timx_chx);//0 down 1 up
+/** 编码器计数器的瞬时计数方向: 0 向下, 1 向上 */
+uint8_t Bsp_Timx_Get_Encoder_Dir(uint8_t timx_chx);
+
+/** Optional TIM2 IMU timebase. Its ISR only counts ticks, it never reads the
+    sensor: IMU sample / attitude fusion run in the main task pipeline. */
 void txg_timer_init_imu_sample_trigger(void);
+uint32_t Bsp_Tim2_Get_Imu_Tick_Count(void);
 
 #ifdef __cplusplus
 }

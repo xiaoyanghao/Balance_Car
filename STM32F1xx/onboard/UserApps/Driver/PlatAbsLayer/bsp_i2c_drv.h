@@ -20,7 +20,7 @@
 #include "stm32f1xx_hal.h"
 
 /*  struct  ------------------------------------------------------------------*/  
- __packed struct bsp_ioi2c_t
+struct bsp_ioi2c_t
 {
     GPIO_TypeDef* scl_gpio_port;	// GPIO port of SCL
     GPIO_TypeDef* sda_gpio_port;	// GPIO port of SDA

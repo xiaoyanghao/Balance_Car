@@ -350,7 +350,6 @@
                     <state>$PROJ_DIR$\..\onboard\UserApps\Device</state>
                     <state>$PROJ_DIR$\..\onboard\UserApps\Interface</state>
                     <state>$PROJ_DIR$\..\onboard\UserApps\Control</state>
-                    <state>$PROJ_DIR$\..\onboard\UserApps\Sensor\FCEstimation\eMPL</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -2418,27 +2417,6 @@
             <name>Sensor</name>
             <group>
                 <name>FCEstimation</name>
-                <group>
-                    <name>eMPL</name>
-                    <file>
-                        <name>$PROJ_DIR$\..\onboard\UserApps\Sensor\FCEstimation\eMPL\dmpKey.h</name>
-                    </file>
-                    <file>
-                        <name>$PROJ_DIR$\..\onboard\UserApps\Sensor\FCEstimation\eMPL\dmpmap.h</name>
-                    </file>
-                    <file>
-                        <name>$PROJ_DIR$\..\onboard\UserApps\Sensor\FCEstimation\eMPL\inv_mpu.c</name>
-                    </file>
-                    <file>
-                        <name>$PROJ_DIR$\..\onboard\UserApps\Sensor\FCEstimation\eMPL\inv_mpu.h</name>
-                    </file>
-                    <file>
-                        <name>$PROJ_DIR$\..\onboard\UserApps\Sensor\FCEstimation\eMPL\inv_mpu_dmp_motion_driver.c</name>
-                    </file>
-                    <file>
-                        <name>$PROJ_DIR$\..\onboard\UserApps\Sensor\FCEstimation\eMPL\inv_mpu_dmp_motion_driver.h</name>
-                    </file>
-                </group>
                 <file>
                     <name>$PROJ_DIR$\..\onboard\UserApps\Sensor\FCEstimation\txg_ahrs_fusion.c</name>
                 </file>

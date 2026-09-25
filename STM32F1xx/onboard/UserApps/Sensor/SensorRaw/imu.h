@@ -5,15 +5,6 @@
 #include <stdbool.h>
 
 /** Extern Micros definition ******************************************************************* */
-typedef struct
-{
-    uint8_t    en;
-    uint8_t    valid_flag;
-    double     bias[3];
-    double     scale[3][3];
-    double     misalign[3][3];
-} imu_adv_cali_param_t;
-
 /** Default acc range */
 #define ACC_X_MAX		GRAVITY
 #define ACC_X_MIN		-GRAVITY
@@ -22,8 +13,6 @@ typedef struct
 #define ACC_Z_MAX		GRAVITY
 #define ACC_Z_MIN		-GRAVITY
 
-#define IMU_ADV_CALI_PARAM_VALID 0xA5
-
 /** Private micros definition ****************************************************************** */
 #define IMU_INSTANCE_MPU		0
 #define IMU_INSTANCE_NUM		1
@@ -31,16 +20,39 @@ typedef struct
 #define delay_ms      HAL_Delay
 /** Extern function type declaration *********************************************************** */
 void imu_init(void);
+
+/**
+ * IMU task entry: read -> decode -> calibrate/filter exactly one sample.
+ * Blocking software I2C is used internally, so this must only be called from the
+ * task layer (never from an interrupt handler).
+ */
 void imu_update(void);
-void imu_samples_pull(int unused);
+
+/* Sample publication: downstream stages detect new data through this sequence. */
+uint32_t imu_get_sample_seq(void);
+uint32_t imu_get_last_update_ms(void);
+bool imu_is_fresh(uint32_t max_age_ms);
 
 void imu_set_fcut_lpf_gyro_acc(uint8_t imu_inst, uint8_t fcut_gyro, uint8_t fcut_acc);
 void imu_set_fcut_lpf_acc_for_inav(uint8_t imu_inst, uint8_t fcut_acc_for_inav);
-void imu_calib_gyro_bias(void);
 void imu_set_acc_range(uint8_t imu_inst, uint8_t *min_max);
-void imu_set_acc_6axis_calib_matrix(uint8_t imu_inst, uint8_t *data);
 
-void get_gyro_calib_offset_from_eeprom(uint8_t imu_inst, int16_t *gyro_offset);
+/**
+ * Capture the gyro zero bias while the board is standing still.
+ * The result is stored internally and every later gyro reading has the bias
+ * removed automatically (see imu_get_gyro / imu_get_gyro_raw).
+ * @param  imu_inst : imu instance
+ * @param  samples  : number of samples to average (5ms apart)
+ * @retval true if enough valid samples were collected and the bias is installed
+ * @note   Blocking (uses the software I2C bus), so it runs at init time before
+ *         the scheduler starts or from a task, never from an interrupt.
+ */
+bool imu_calib_gyro_bias(uint8_t imu_inst, uint16_t samples);
+
+/** Measured gyro zero bias of one axis, unit: deg/s (0 while uncalibrated). */
+double imu_get_gyro_bias_dps(uint8_t imu_inst, uint8_t axis);
+/** True once imu_calib_gyro_bias() succeeded for this instance. */
+bool imu_gyro_bias_is_calibrated(uint8_t imu_inst);
 
 //1、传感器原始数据
 double imu_get_gyro_rawest(uint8_t imu_inst, uint8_t axis);

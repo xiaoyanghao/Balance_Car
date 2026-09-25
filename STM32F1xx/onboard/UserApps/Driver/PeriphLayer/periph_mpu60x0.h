@@ -2,6 +2,7 @@
 #define __PERIPH_MPU60x0_H
 
 #include "stm32f1xx.h"
+#include <stdbool.h>
 
 #ifndef __rev16
 #define __rev16 __REV16
@@ -20,8 +21,9 @@
 #define MPU60x0_GYO_SCALE      	1000  // deg/s  (250, 500, 1000, 2000)
 
 int8_t mpu60x0_init(void);
+/* Blocking (bit-banged I2C) access: task layer only, never from an ISR. */
 void mpu60x0_transfer(void);
-void mpu60x0_update(void);
+bool mpu60x0_update(void);
 
 
 double mpu60x0_get_rawgyo_dps(uint8_t axis);

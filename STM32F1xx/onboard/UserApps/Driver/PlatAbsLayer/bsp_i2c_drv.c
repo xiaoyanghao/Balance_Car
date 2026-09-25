@@ -27,9 +27,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp_i2c_drv.h"
 #include "bsp_delay_drv.h"
+#include <stdint.h>
     
 /* Private define ------------------------------------------------------------*/
-#define GPIO_I2C_CLK_ENABLE()         __HAL_RCC_GPIOB_CLK_ENABLE() 
+#define GPIO_I2C_CLK_ENABLE()         do { \
+  __HAL_RCC_GPIOA_CLK_ENABLE(); \
+  __HAL_RCC_GPIOB_CLK_ENABLE(); \
+  __HAL_RCC_GPIOC_CLK_ENABLE(); \
+} while (0)
 
 #define I2C_SCL_H                     HAL_GPIO_WritePin(ioi2c->scl_gpio_port, ioi2c->scl_gpio_pin, GPIO_PIN_SET)
 #define I2C_SCL_L                     HAL_GPIO_WritePin(ioi2c->scl_gpio_port, ioi2c->scl_gpio_pin, GPIO_PIN_RESET)
@@ -54,6 +59,7 @@ static void bsp_i2c_nack(struct bsp_ioi2c_t *ioi2c);
 static uint8_t bsp_i2c_wait_ack(struct bsp_ioi2c_t *ioi2c);
 static void bsp_i2c_send_byte(struct bsp_ioi2c_t *ioi2c, uint8_t txd);
 static uint8_t bsp_i2c_read_byte(struct bsp_ioi2c_t *ioi2c);
+static uint8_t bsp_i2c_clock_high(struct bsp_ioi2c_t *ioi2c);
 
 /**
   * @brief Gpio I2C init
@@ -65,8 +71,8 @@ void Bsp_I2c_Init(struct bsp_ioi2c_t *ioi2c)
   
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   GPIO_I2C_CLK_ENABLE();
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   
   GPIO_InitStruct.Pin = ioi2c->scl_gpio_pin;
@@ -75,8 +81,8 @@ void Bsp_I2c_Init(struct bsp_ioi2c_t *ioi2c)
   GPIO_InitStruct.Pin = ioi2c->sda_gpio_pin;
   HAL_GPIO_Init(ioi2c->sda_gpio_port, &GPIO_InitStruct);
   
-  HAL_GPIO_WritePin(ioi2c->scl_gpio_port, ioi2c->scl_gpio_pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(ioi2c->sda_gpio_port, ioi2c->sda_gpio_pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(ioi2c->scl_gpio_port, ioi2c->scl_gpio_pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(ioi2c->sda_gpio_port, ioi2c->sda_gpio_pin, GPIO_PIN_SET);
 }
 
 /**
@@ -97,8 +103,22 @@ static void bsp_i2c_sda_out(struct bsp_ioi2c_t *ioi2c)
     cr = &ioi2c->sda_gpio_port->CRH;
     shift = (pos - 8) * 4;
   }
-  /* Output push-pull 50MHz: MODE=11, CNF=00 → 0x3 */
-  *cr = (*cr & ~(0x0FUL << shift)) | (0x03UL << shift);
+  /* Output open-drain 50MHz: MODE=11, CNF=01 -> 0x7. */
+  *cr = (*cr & ~(0x0FUL << shift)) | (0x07UL << shift);
+}
+
+static uint8_t bsp_i2c_clock_high(struct bsp_ioi2c_t *ioi2c)
+{
+  uint16_t timeout = 100;
+
+  I2C_SCL_H;
+  while (HAL_GPIO_ReadPin(ioi2c->scl_gpio_port, ioi2c->scl_gpio_pin) == GPIO_PIN_RESET)
+  {
+    if (--timeout == 0)
+        return 0;
+  }
+  i2c_delay_us(2);
+  return 1;
 }
 
 /**
@@ -134,8 +154,8 @@ static void bsp_i2c_start(struct bsp_ioi2c_t *ioi2c)
 {
   bsp_i2c_sda_out(ioi2c);
   I2C_SDA_H;
-  I2C_SCL_H;
-  i2c_delay_us(4);
+  if (!bsp_i2c_clock_high(ioi2c))
+      return;
   I2C_SDA_L;
   i2c_delay_us(4);
   I2C_SCL_L; 
@@ -153,7 +173,7 @@ static void bsp_i2c_stop(struct bsp_ioi2c_t *ioi2c)
   I2C_SCL_L;
   I2C_SDA_L;
   i2c_delay_us(4);
-  I2C_SCL_H;
+  bsp_i2c_clock_high(ioi2c);
   I2C_SDA_H;
   i2c_delay_us(4);
 }
@@ -169,8 +189,7 @@ static void bsp_i2c_ack(struct bsp_ioi2c_t *ioi2c)
    bsp_i2c_sda_out(ioi2c);
    I2C_SDA_L;
    i2c_delay_us(2);
-   I2C_SCL_H;
-   i2c_delay_us(2);
+  bsp_i2c_clock_high(ioi2c);
    I2C_SCL_L;
 }
 
@@ -185,8 +204,7 @@ static void bsp_i2c_nack(struct bsp_ioi2c_t *ioi2c)
    bsp_i2c_sda_out(ioi2c);
    I2C_SDA_H;
    i2c_delay_us(2);
-   I2C_SCL_H;
-   i2c_delay_us(2);
+  bsp_i2c_clock_high(ioi2c);
    I2C_SCL_L;
 }
 
@@ -204,17 +222,21 @@ static uint8_t bsp_i2c_wait_ack(struct bsp_ioi2c_t *ioi2c)
   
   I2C_SDA_H;
   i2c_delay_us(1);
-  I2C_SCL_H;
-  i2c_delay_us(1);
-  
+  if (!bsp_i2c_clock_high(ioi2c))
+  {
+    bsp_i2c_stop(ioi2c);
+    return 1;
+  }
+
   while(HAL_GPIO_ReadPin(ioi2c->sda_gpio_port, ioi2c->sda_gpio_pin) == GPIO_PIN_SET)
   {
-    tempTime++;
-    if(tempTime>250)
+    if (++tempTime > 10)
     {
+      I2C_SCL_L;
       bsp_i2c_stop(ioi2c);
       return 1;
-    }	 
+    }
+    i2c_delay_us(1);
   }
   
   I2C_SCL_L;
@@ -241,8 +263,8 @@ static void bsp_i2c_send_byte(struct bsp_ioi2c_t *ioi2c, uint8_t txd)
       I2C_SDA_L;
     
     txd<<=1;
-    I2C_SCL_H;
-    i2c_delay_us(2); 
+    if (!bsp_i2c_clock_high(ioi2c))
+      return;
     I2C_SCL_L;
     i2c_delay_us(2);
   }
@@ -262,7 +284,7 @@ static uint8_t bsp_i2c_read_byte(struct bsp_ioi2c_t *ioi2c)
   {
     I2C_SCL_L;
     i2c_delay_us(2);
-    I2C_SCL_H;
+    bsp_i2c_clock_high(ioi2c);
     receive<<=1;
     if(HAL_GPIO_ReadPin(ioi2c->sda_gpio_port, ioi2c->sda_gpio_pin) == GPIO_PIN_SET){
       receive++;
@@ -287,7 +309,10 @@ uint8_t Bsp_I2c_Write_Buffer(struct bsp_ioi2c_t *ioi2c,uint8_t addr, uint8_t reg
     return 0;
   }
   bsp_i2c_send_byte(ioi2c, reg);
-  bsp_i2c_wait_ack(ioi2c);
+  if (bsp_i2c_wait_ack(ioi2c)) {
+    bsp_i2c_stop(ioi2c);
+    return 0;
+  }
   for (i = 0; i < len; i++) {
     bsp_i2c_send_byte(ioi2c,*data);
     if (bsp_i2c_wait_ack(ioi2c)) {
@@ -314,11 +339,17 @@ uint8_t Bsp_I2c_Read_Buffer(struct bsp_ioi2c_t *ioi2c, uint8_t addr, uint8_t reg
         return 0;
     }
     bsp_i2c_send_byte(ioi2c, reg);
-    bsp_i2c_wait_ack(ioi2c);
+    if (bsp_i2c_wait_ack(ioi2c)) {
+      bsp_i2c_stop(ioi2c);
+      return 0;
+    }
 
     bsp_i2c_start(ioi2c);
     bsp_i2c_send_byte(ioi2c, addr << 1 | 1);
-    bsp_i2c_wait_ack(ioi2c);
+    if (bsp_i2c_wait_ack(ioi2c)) {
+      bsp_i2c_stop(ioi2c);
+      return 0;
+    }
     while (len){
       *buf = bsp_i2c_read_byte(ioi2c);
       if (len == 1)
@@ -359,14 +390,14 @@ int8_t Bsp_I2c_Multi_Read_Reg16(struct bsp_ioi2c_t *ioi2c, uint8_t SlaveAddress,
         return 0;
     }
 
-    bsp_i2c_send_byte(ioi2c, (uint8_t)(REG_Address>>8));
-    bsp_i2c_wait_ack(ioi2c);
-    bsp_i2c_send_byte(ioi2c, (uint8_t)(REG_Address&0x00FF));
-    bsp_i2c_wait_ack(ioi2c);
+    bsp_i2c_send_byte(ioi2c, (uint8_t)(REG_Address >> 8));
+    if (bsp_i2c_wait_ack(ioi2c)) goto read16_fail;
+    bsp_i2c_send_byte(ioi2c, (uint8_t)REG_Address);
+    if (bsp_i2c_wait_ack(ioi2c)) goto read16_fail;
 
-    bsp_i2c_wait_ack(ioi2c);
-    bsp_i2c_send_byte(ioi2c, SlaveAddress+1);
-    bsp_i2c_wait_ack(ioi2c);
+    bsp_i2c_start(ioi2c);
+    bsp_i2c_send_byte(ioi2c, (uint8_t)(SlaveAddress | 1U));
+    if (bsp_i2c_wait_ack(ioi2c)) goto read16_fail;
 
     for (i=1; i<size; i++)
     {
@@ -377,6 +408,10 @@ int8_t Bsp_I2c_Multi_Read_Reg16(struct bsp_ioi2c_t *ioi2c, uint8_t SlaveAddress,
     bsp_i2c_nack(ioi2c);
     bsp_i2c_stop(ioi2c);
     return 1;
+
+  read16_fail:
+    bsp_i2c_stop(ioi2c);
+    return 0;
 }
 
 /**
@@ -398,8 +433,7 @@ int8_t Bsp_I2c_Multi_Write_Reg16(struct bsp_ioi2c_t *ioi2c, uint8_t slave_addr, 
     address_h = (uint8_t)(reg>>8);
     address_l = (uint8_t)(reg);
 
-    if (bsp_i2c_wait_ack(ioi2c))
-        return 0;
+    bsp_i2c_start(ioi2c);
 
     bsp_i2c_send_byte(ioi2c, slave_addr);
 
@@ -410,14 +444,26 @@ int8_t Bsp_I2c_Multi_Write_Reg16(struct bsp_ioi2c_t *ioi2c, uint8_t slave_addr, 
     }
 
     bsp_i2c_send_byte(ioi2c, address_h);
-    bsp_i2c_wait_ack(ioi2c);
+    if (bsp_i2c_wait_ack(ioi2c))
+    {
+      bsp_i2c_stop(ioi2c);
+      return 0;
+    }
     bsp_i2c_send_byte(ioi2c, address_l);
-    bsp_i2c_wait_ack(ioi2c);
+    if (bsp_i2c_wait_ack(ioi2c))
+    {
+      bsp_i2c_stop(ioi2c);
+      return 0;
+    }
 
     for (count=0; count<length; count++)
     {
         bsp_i2c_send_byte(ioi2c, data[count]);
-        bsp_i2c_wait_ack(ioi2c);
+        if (bsp_i2c_wait_ack(ioi2c))
+        {
+          bsp_i2c_stop(ioi2c);
+          return 0;
+        }
     }
     bsp_i2c_stop(ioi2c);
 

@@ -1,13 +1,13 @@
 #include "periph_mpu60x0.h"
 #include "bsp_i2c_drv.h"
 
-/* Struct def of MPU60x0 SPI read */
+/* MPU60x0 sample state. */
 typedef struct
 {
     /** DMA method vars */
 
-    uint8_t rxBuf[MPU60x0_SLOT_SIZE*MPU60x0_SLOTS];
-    uint8_t slot;
+    uint8_t rxBuf[MPU60x0_BYTES];
+    uint8_t sample_ready;
     float  rawTemp;
     double rawAcc[3];
     double rawGyo[3];
@@ -211,10 +211,10 @@ static void mpu60x0Decode(void)
     }
     temp = 0;
 
-    divisor = (double)MPU60x0_SLOTS;
-    for (i = 0; i < MPU60x0_SLOTS; i++)
+    divisor = 1.0;
+    for (i = 0; i < 1; i++)
     {
-        uint8_t j = i*MPU60x0_SLOT_SIZE;
+        uint8_t j = 0;
 
         for (int8_t k=0; k<3; k++)
         {
@@ -266,19 +266,14 @@ static void mpu60x0Decode(void)
  */
 int8_t mpu60x0_init(void)
 {
-
     Bsp_I2c_Init(&mpu60x0_ioi2c_t);
-    
-//    if (mpu60x0_config())
-//    {
-//        _mpu60x0Data.enabled = 1;
-//        return 1;
-//    }
-//    else
-//    {
-//        _mpu60x0Data.enabled = 0;
+    _mpu60x0Data.enabled = 0;
+    _mpu60x0Data.sample_ready = 0;
+    if (!mpu60x0_config())
         return 0;
-//    }
+
+    _mpu60x0Data.enabled = 1;
+    return 1;
 }
 
 
@@ -287,16 +282,29 @@ void mpu60x0_transfer(void)
 
     if (_mpu60x0Data.enabled)
     {
-      //for(_mpu60x0Data.slot = 0; _mpu60x0Data.slot<MPU60x0_SLOTS; _mpu60x0Data.slot++)
-        Bsp_I2c_Read_Buffer(&mpu60x0_ioi2c_t,MPU60x0_ADDR, 0x3b, MPU60x0_BYTES, &_mpu60x0Data.rxBuf[_mpu60x0Data.slot*MPU60x0_SLOT_SIZE]); 
-        _mpu60x0Data.slot = (_mpu60x0Data.slot + 1) % MPU60x0_SLOTS;
+                _mpu60x0Data.sample_ready = Bsp_I2c_Read_Buffer(
+                        &mpu60x0_ioi2c_t, MPU60x0_ADDR, 0x3B, MPU60x0_BYTES,
+                        _mpu60x0Data.rxBuf);
     }
    
 }
 
-void mpu60x0_update(void)
+/**
+ * Decode the raw buffer filled by mpu60x0_transfer().
+ * @return : true if a new sample has been decoded, false if there was nothing new.
+ * @note   : Task context only.
+ */
+bool mpu60x0_update(void)
 {
+    if (!_mpu60x0Data.sample_ready)
+    {
+        return false;
+    }
+
     mpu60x0Decode();
+    _mpu60x0Data.sample_ready = 0;
+
+    return true;
 }
 
 
